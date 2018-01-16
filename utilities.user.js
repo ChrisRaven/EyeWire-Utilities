@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      1.0.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -167,7 +167,7 @@ var EwsSettings = function () {
   add('Hide About', 'ew-hide-about', '#ews-settings-group-top-buttons');
   add('Hide FAQ', 'ew-hide-faq', '#ews-settings-group-top-buttons');
 
-  if (document.getElementById('accuracy-container')) {
+if (K.gid('ewsLinkWrapper')) {
     add('Hide Stats', 'ew-hide-stats', '#ews-settings-group-top-buttons');
 }
 
