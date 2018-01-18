@@ -96,10 +96,10 @@ function showOrHideButton(pref, state) {
   }
 
   if (state) {
-    $("#nav ul a:contains('" + text + "')").parent().hide();
+    $("#nav ul a:contains('" + text + "')").parent().show();
   }
   else {
-    $("#nav ul a:contains('" + text + "')").parent().show();
+    $("#nav ul a:contains('" + text + "')").parent().hide();
   }
 }
   
@@ -111,12 +111,12 @@ var EwsSettings = function () {
   var settings = {
     'ews-auto-refresh-showmeme': false,
     'ews-submit-using-spacebar': false,
-    'ew-hide-blog': false,
-    'ew-hide-wiki': false,
-    'ew-hide-forum': false,
-    'ew-hide-about': false,
-    'ew-hide-faq': false,
-    'ew-hide-stats': false
+    'ew-hide-blog': true,
+    'ew-hide-wiki': true,
+    'ew-hide-forum': true,
+    'ew-hide-about': true,
+    'ew-hide-faq': true,
+    'ew-hide-stats': true
   };
 
   var stored = K.ls.get('settings');
@@ -161,14 +161,14 @@ var EwsSettings = function () {
   }
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
-  add('Hide Blog', 'ew-hide-blog', '#ews-settings-group-top-buttons');
-  add('Hide Wiki', 'ew-hide-wiki', '#ews-settings-group-top-buttons');
-  add('Hide Forum', 'ew-hide-forum', '#ews-settings-group-top-buttons');
-  add('Hide About', 'ew-hide-about', '#ews-settings-group-top-buttons');
-  add('Hide FAQ', 'ew-hide-faq', '#ews-settings-group-top-buttons');
+  add('Blog', 'ew-hide-blog', '#ews-settings-group-top-buttons');
+  add('Wiki', 'ew-hide-wiki', '#ews-settings-group-top-buttons');
+  add('Forum', 'ew-hide-forum', '#ews-settings-group-top-buttons');
+  add('About', 'ew-hide-about', '#ews-settings-group-top-buttons');
+  add('FAQ', 'ew-hide-faq', '#ews-settings-group-top-buttons');
 
 if (K.gid('ewsLinkWrapper')) {
-    add('Hide Stats', 'ew-hide-stats', '#ews-settings-group-top-buttons');
+    add('Stats', 'ew-hide-stats', '#ews-settings-group-top-buttons');
 }
 
   this.set = function(setting, value) {
@@ -247,44 +247,26 @@ var settings = new EwsSettings();
 
 
 $(document).on('votes-updated', function (event, data) {
-      var
-        host = window.location.hostname,
-        targetUrl = 'https://';
+  var
+    btn = $('.showmeme button');
 
-      if (host.indexOf('beta') !== -1) {
-        targetUrl += 'beta.';
-      }
-      else if (host.indexOf('chris') !== -1) {
-        targetUrl += 'chris.';
-      }
-      targetUrl += 'eyewire.org/1.0/cell/' + data.cellId + '/tasks/complete/player';
+  if (!btn.hasClass('on1')) {
+    if (btn.hasClass('on2')) {
+      btn.click().click().click();
+    }
+    else {
+      btn.click();
 
-      $.getJSON(targetUrl, function (JSONData) {
-        var
-          btn = $('.showmeme button');
+      setTimeout(function () {
+        btn.click();
+        setTimeout(function () {
+          btn.click();
+        }, 500);
+      }, 500);
+    }
 
-        if (!JSONData) {
-          return;
-        }
-
-        if (!btn.hasClass('on1')) {
-          if (btn.hasClass('on2')) {
-            btn.click().click().click();
-          }
-          else {
-            btn.click();
-
-            setTimeout(function () {
-              btn.click();
-              setTimeout(function () {
-                btn.click();
-              }, 500);
-            }, 500);
-          }
-
-        }
-      });
-    });
+  }
+});
 
 // submit using Spacebar
 $('body').keydown(function (evt) {
@@ -313,6 +295,7 @@ $('body').keydown(function (evt) {
 // end: submit using Spacebar
 
 // tu
+
 
 } // end: main()
 
