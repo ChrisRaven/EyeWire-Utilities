@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.1.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -93,6 +93,7 @@ function showOrHideButton(pref, state) {
     case "ew-hide-about": text = 'About'; break;
     case "ew-hide-faq": text = 'FAQ'; break;
     case "ew-hide-stats": text = 'Stats'; break;
+    default: return; // to not change anything, when some other setting was changed
   }
 
   if (state) {
