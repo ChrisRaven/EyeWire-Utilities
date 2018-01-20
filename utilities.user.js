@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.1.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -227,27 +227,14 @@ else {
 }
 
 
-K.injectJS(`
-  (function (open) {
-    XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
-      this.addEventListener("readystatechange", function (evt) {
-        if (this.readyState == 4 && this.status == 200 &&
-            url.indexOf('/1.0/task/') !== -1 &&
-            url.indexOf('/submit') === -1 &&
-            method.toLowerCase() === 'post') {
-          $(document).trigger('votes-updated', {cellId: tomni.cell, cellName: tomni.getCurrentCell().info.name, datasetId: tomni.getCurrentCell().info.dataset_id});
-        }
-      }, false);
-      open.call(this, method, url, async, user, pass);
-    };
-  }) (XMLHttpRequest.prototype.open);
-`);
-
-
 var settings = new EwsSettings();  
 
 
-$(document).on('votes-updated', function (event, data) {
+$(document).on('websocket-task-completions', function (event, data) {
+  if (data.uid !== account.account.uid) {
+    return;
+  }
+
   var
     btn = $('.showmeme button');
 
