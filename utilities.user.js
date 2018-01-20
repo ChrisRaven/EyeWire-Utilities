@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.1.2
+// @version      1.1.3
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -238,7 +238,7 @@ $(document).on('websocket-task-completions', function (event, data) {
   var
     btn = $('.showmeme button');
 
-  if (!btn.hasClass('on1')) {
+  if (!btn.hasClass('on1') && settings.get('ews-auto-refresh-showmeme')) {
     if (btn.hasClass('on2')) {
       btn.click().click().click();
     }
