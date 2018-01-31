@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.1.3
+// @version      1.1.4
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -147,7 +147,7 @@ var EwsSettings = function () {
   
   function add(name, id, target = '#ews-settings-group') {
     $(target).append(`
-      <div class="setting">
+      <div class="setting utilities">
         <span>` + name + `</span>
         <div class="checkbox">
           <div class="checkbox-handle"></div>
@@ -162,6 +162,7 @@ var EwsSettings = function () {
   }
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
+  
   add('Blog', 'ew-hide-blog', '#ews-settings-group-top-buttons');
   add('Wiki', 'ew-hide-wiki', '#ews-settings-group-top-buttons');
   add('Forum', 'ew-hide-forum', '#ews-settings-group-top-buttons');
@@ -183,7 +184,7 @@ if (K.gid('ewsLinkWrapper')) {
   
   
 // source: crazyman's script
-  $('#ews-settings-group input, #ews-settings-group-top-buttons input').each(function() {
+  $('#ews-settings-group .utilities input, #ews-settings-group-top-buttons input').each(function() {
     var
       elem, pref, sets;
 
@@ -196,7 +197,7 @@ if (K.gid('ewsLinkWrapper')) {
     $(document).trigger('ews-setting-changed', {setting: pref, state: sets[pref]});
   });
 
-  $('#ews-settings-group input, #ews-settings-group-top-buttons input').closest('div.setting').click(function(evt) {
+  $('#ews-settings-group .utilities input, #ews-settings-group-top-buttons input').closest('div.setting').click(function(evt) {
     var
       $elem, elem, newState;
 
