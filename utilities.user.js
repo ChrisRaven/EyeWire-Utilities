@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.1.4
+// @version      1.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -103,7 +103,70 @@ function showOrHideButton(pref, state) {
     $("#nav ul a:contains('" + text + "')").parent().hide();
   }
 }
-  
+
+function changeHtml(selector, text) {
+  let el = K.qS(selector);
+  if (el) {
+    el.childNodes[0].nodeValue = text;
+  }
+}
+
+
+function compactOrExpandScoutsLog(state) {
+  if (!K.gid('scoutsLogFloatingControls')) {
+    return;
+  }
+
+  if (state) {
+    K.gid('scoutsLogFloatingControls').style.width = 'auto';
+    K.gid('scoutsLogFloatingControls').style.padding = '1px 2px 2px 2px';
+    $('#scoutsLogFloatingControls a').css({
+      'margin-right': 0,
+      'vertical-align': 'top',
+      'width': '15px'
+    });
+    $('#scoutsLogFloatingControls a span').css({
+      'background-color': '#000',
+      'padding': 0
+    });
+    changeHtml('.sl-cell-list', 'C');
+    changeHtml('.sl-mystic', 'M');
+    changeHtml('.sl-open', 'O');
+    changeHtml('.sl-need-admin', 'A');
+    changeHtml('.sl-need-scythe', 'S');
+    changeHtml('.sl-watch', 'W');
+    changeHtml('.sl-history', 'H');
+    changeHtml('.sl-promotions', 'P');
+    changeHtml('#sl-task-details', 'D');
+    changeHtml('#sl-task-entry', 'N');
+    K.qS('#scoutsLogFloatingControls img').style.display = 'none';
+  }
+  else {
+    K.gid('scoutsLogFloatingControls').style.width = '';
+    K.gid('scoutsLogFloatingControls').style.padding = '8px';
+    $('#scoutsLogFloatingControls a').css({
+      'margin-right': '8px',
+      'vertical-align': 'top',
+      'width': ''
+    });
+    $('#scoutsLogFloatingControls a span').css({
+      'background-color': '#7a8288',
+      'padding': '3px 7px'
+    });
+    changeHtml('.sl-cell-list', 'Cell List');
+    changeHtml('.sl-mystic', 'Mystic ');
+    changeHtml('.sl-open', 'Open Tasks ');
+    changeHtml('.sl-need-admin', 'Need Admin ');
+    changeHtml('.sl-need-scythe', 'Need Scythe ');
+    changeHtml('.sl-watch', 'Watch ');
+    changeHtml('.sl-history', 'History');
+    changeHtml('.sl-promotions', 'Promotions');
+    changeHtml('#sl-task-details', 'Cube Details ');
+    changeHtml('#sl-task-entry', 'New Entry');
+    K.qS('#scoutsLogFloatingControls img').style.display = '';
+  }
+}
+
   
 // SETTINGS
 var EwsSettings = function () {
@@ -112,6 +175,7 @@ var EwsSettings = function () {
   var settings = {
     'ews-auto-refresh-showmeme': false,
     'ews-submit-using-spacebar': false,
+    'ews-compact-scouts-log': false,
     'ew-hide-blog': true,
     'ew-hide-wiki': true,
     'ew-hide-forum': true,
@@ -157,6 +221,10 @@ var EwsSettings = function () {
     `);
   }
 
+  if (account.roles.scout || account.roles.scythe || account.roles.mystics || account.roles.admin) {
+    add('Compact horizontal Scout\'s Log', 'ews-compact-scouts-log');
+  }
+  
   if (account.roles.scythe || account.roles.mystic || account.roles.admin) {
     add('Auto Refresh ShowMeMe', 'ews-auto-refresh-showmeme');
   }
@@ -215,8 +283,33 @@ if (K.gid('ewsLinkWrapper')) {
 };
 
 $(document).on('ews-setting-changed', function (evt, data) {
-    showOrHideButton(data.setting, data.state);
+  switch (data.setting) {
+    case 'ew-hide-blog':
+    case 'ew-hide-about':
+    case 'ew-hide-faq':
+    case 'ew-hide-forum':
+    case 'ew-hide-stats':
+    case 'ew-hide-wiki':
+      showOrHideButton(data.setting, data.state);
+      break;
+    case 'ews-compact-scouts-log':
+      compactOrExpandScoutsLog(data.state);
+      break;
+  }
 });
+
+let intv2 = setInterval(function () {
+  if (!K.qS('.sl-cell-list')) {
+    return;
+  }
+  clearInterval(intv2);
+  let settings = K.ls.get('settings');
+  if (settings) {
+    settings = JSON.parse(settings);
+    $(document).trigger('ews-setting-changed', {setting: 'ews-compact-scouts-log', state: settings['ews-compact-scouts-log']});
+  }
+
+}, 100);
 // end: SETTINGS
 
 
