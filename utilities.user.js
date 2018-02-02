@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.3.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -230,7 +230,7 @@ var EwsSettings = function () {
   if (account.roles.scythe || account.roles.mystic || account.roles.admin) {
     add('Auto Refresh ShowMeMe', 'ews-auto-refresh-showmeme');
     add('Show Restore Seed button', 'show-restore-seed-button');
-    add('Show Remove Dupes Button', 'show-remove-duplicate-segs-button');
+    add('Show Remove Dupes button', 'show-remove-duplicate-segs-button');
   }
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
