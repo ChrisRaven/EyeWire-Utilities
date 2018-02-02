@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -181,7 +181,9 @@ var EwsSettings = function () {
     'ew-hide-forum': true,
     'ew-hide-about': true,
     'ew-hide-faq': true,
-    'ew-hide-stats': true
+    'ew-hide-stats': true,
+    'show-restore-seed-button': false,
+    'show-remove-duplicate-segs-button': false
   };
 
   var stored = K.ls.get('settings');
@@ -227,10 +229,12 @@ var EwsSettings = function () {
   
   if (account.roles.scythe || account.roles.mystic || account.roles.admin) {
     add('Auto Refresh ShowMeMe', 'ews-auto-refresh-showmeme');
+    add('Show Restore Seed button', 'show-restore-seed-button');
+    add('Show Remove Dupes Button', 'show-remove-duplicate-segs-button');
   }
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
-  
+
   add('Blog', 'ew-hide-blog', '#ews-settings-group-top-buttons');
   add('Wiki', 'ew-hide-wiki', '#ews-settings-group-top-buttons');
   add('Forum', 'ew-hide-forum', '#ews-settings-group-top-buttons');
@@ -282,6 +286,10 @@ if (K.gid('ewsLinkWrapper')) {
   });
 };
 
+function setReapAuxButtonVisibility(id, state) {
+  K.gid(id).style.visibility = state ? 'visible' : 'hidden';
+}
+
 $(document).on('ews-setting-changed', function (evt, data) {
   switch (data.setting) {
     case 'ew-hide-blog':
@@ -294,6 +302,12 @@ $(document).on('ews-setting-changed', function (evt, data) {
       break;
     case 'ews-compact-scouts-log':
       compactOrExpandScoutsLog(data.state);
+      break;
+    case 'show-restore-seed-button':
+      setReapAuxButtonVisibility('ews-restore-seed-button', data.state);
+      break;
+    case 'show-remove-duplicate-segs-button':
+      setReapAuxButtonVisibility('ews-remove-duplicates-button', data.state);
       break;
   }
 });
@@ -311,6 +325,41 @@ let intv2 = setInterval(function () {
 
 }, 100);
 // end: SETTINGS
+
+$('#editActions').append('<button class="reapAuxButton" id="ews-restore-seed-button" title="Restore Seed Segments">RS</button>');
+$('#editActions').append('<button class="reapAuxButton" id="ews-remove-duplicates-button" title="Remove Duplicate Segments">RD</button>');
+
+$('#ews-restore-seed-button')
+  .css({
+    'color': 'white',
+    'left': '50%',
+    'position': 'absolute',
+    'margin-top': 'auto',
+    'margin-left': '270px'
+  })
+  .click(function () {
+    tomni.f('select', {segids: tomni.task.seeds()});
+  });
+
+$('#ews-remove-duplicates-button')
+  .css({
+    'color': 'white',
+    'left': '50%',
+    'position': 'absolute',
+    'margin-top': 'auto',
+    'margin-left': '315px'
+  })
+  .click(function () {
+    let dupes = tomni.task.duplicates;
+
+    if (dupes && dupes[0]) {
+      dupes = dupes[0].duplicate_segs;
+    }
+
+    if (dupes) {
+      tomni.f('deselect', {segids: dupes});
+    }
+  });
 
 
 if (LOCAL) {
