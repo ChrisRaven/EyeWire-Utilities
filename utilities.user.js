@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.4.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -429,7 +429,7 @@ let datasetBordersZFishOriginCube = createDatasetBordersCube({
 }, true);
 
 function addDatasetBorders() {
-  let dataset = tomni.getCurrentCell().info.dataset_id;
+  let dataset = (tomni && tomni.cell) ? tomni.getCurrentCell().info.dataset_id : 1;
   let world = tomni.threeD.getWorld();
 
   if (dataset === 1) {
@@ -454,7 +454,7 @@ function removeDatasetBorders() {
 }
 
 function addDatasetOrigin() {
-  let dataset = tomni.getCurrentCell().info.dataset_id;
+  let dataset = (tomni && tomni.cell) ? tomni.getCurrentCell().info.dataset_id : 1;
   let world = tomni.threeD.getWorld();
 
   if (dataset === 1) {
