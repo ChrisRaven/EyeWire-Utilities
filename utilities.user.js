@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.4.1
+// @version      1.4.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -366,7 +366,7 @@ function toggleDatasetBordersVisibility() {
   // the showButton option in Settings is true
   // the state of the button is true
   // we are not in gameMode or we are in gameMode and showDuringPlay option is true
-  if (settings['show-dataset-borders-button'] && buttonState &&
+  if (showBorders && buttonState &&
   (gameMode && showDuringPlay || !gameMode)) {
     addDatasetBorders();
     if (showOrigin) {
@@ -612,13 +612,16 @@ $('#ews-remove-duplicates-button')
   })
   .click(function () {
     let dupes = tomni.task.duplicates;
+    let dupeSegs = [];
 
     if (dupes && dupes[0]) {
-      dupes = dupes[0].duplicate_segs;
+      for (let i = 0; i < dupes.length; i++) {
+        dupeSegs = dupeSegs.concat(dupes[i].duplicate_segs);
+      }
     }
 
-    if (dupes) {
-      tomni.f('deselect', {segids: dupes});
+    if (dupeSegs) {
+      tomni.f('deselect', {segids: dupeSegs});
     }
   });
 
