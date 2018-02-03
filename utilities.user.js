@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.3.1
+// @version      1.4
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 /*jshint esversion: 6 */
-/*globals $, account, tomni */
+/*globals $, account, tomni, THREE */ 
 
 var LOCAL = false;
 if (LOCAL) {
@@ -183,11 +183,14 @@ var EwsSettings = function () {
     'ew-hide-faq': true,
     'ew-hide-stats': true,
     'show-restore-seed-button': false,
-    'show-remove-duplicate-segs-button': false
+    'show-remove-duplicate-segs-button': false,
+    'show-dataset-borders-button': true,
+    'dataset-borders-show-origin': true,
+    'dataset-borders-show-during-play': true
   };
 
   var stored = K.ls.get('settings');
-  if(stored) {
+  if (stored) {
     $.extend(settings, JSON.parse(stored));
   }
 
@@ -222,6 +225,11 @@ var EwsSettings = function () {
       </div>
     `);
   }
+  
+  function addIndented(name, id, target) {
+    add(name, id, target);
+    K.gid(id).parentNode.parentNode.style.marginLeft = '30px';
+  }
 
   if (account.roles.scout || account.roles.scythe || account.roles.mystics || account.roles.admin) {
     add('Compact horizontal Scout\'s Log', 'ews-compact-scouts-log');
@@ -232,6 +240,10 @@ var EwsSettings = function () {
     add('Show Restore Seed button', 'show-restore-seed-button');
     add('Show Remove Dupes button', 'show-remove-duplicate-segs-button');
   }
+  
+  add('Show Dataset Borders button', 'show-dataset-borders-button');
+  addIndented('Show origin', 'dataset-borders-show-origin');
+  addIndented('Show during play/inspect', 'dataset-borders-show-during-play');
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
 
@@ -241,9 +253,9 @@ var EwsSettings = function () {
   add('About', 'ew-hide-about', '#ews-settings-group-top-buttons');
   add('FAQ', 'ew-hide-faq', '#ews-settings-group-top-buttons');
 
-if (K.gid('ewsLinkWrapper')) {
-    add('Stats', 'ew-hide-stats', '#ews-settings-group-top-buttons');
-}
+  if (K.gid('ewsLinkWrapper')) {
+      add('Stats', 'ew-hide-stats', '#ews-settings-group-top-buttons');
+  }
 
   this.set = function(setting, value) {
     settings[setting] = value;
@@ -290,6 +302,241 @@ function setReapAuxButtonVisibility(id, state) {
   K.gid(id).style.visibility = state ? 'visible' : 'hidden';
 }
 
+K.injectJS(`
+  $(window)
+    .on('cell-info-ready', function (e, data) {
+      $(document).trigger('cell-info-ready-triggered.utilities', data);
+    })
+    .on('cube-enter', function (e, data) {
+      $(document).trigger('cube-enter-triggered.utilities', data);
+    })
+    .on('cube-leave', function (e, data) {
+      $(document).trigger('cube-leave-triggered.utilities', data);
+    });
+  `);
+  
+$(document).on('cell-info-ready-triggered.utilities', toggleDatasetBordersVisibility);
+
+$(document).on('cube-enter-triggered.utilities', function () {
+  let settings = K.ls.get('settings');
+  let showInCube = false;
+  
+  if (settings) {
+    settings = JSON.parse(settings);
+    showInCube = settings['dataset-borders-show-during-play'];
+  }
+  
+  if (!showInCube) {
+    removeDatasetBorders();
+    removeDatasetOrigin();
+  }
+});
+
+$(document).on('cube-leave-triggered.utilities', function () {
+  let settings = K.ls.get('settings');
+  let showInCube = false;
+
+  if (settings) {
+    settings = JSON.parse(settings);
+    showInCube = settings['dataset-borders-show-during-play'];
+  }
+  
+  // we only have to take care, when in-cube is turned off
+  if (!showInCube) {
+    toggleDatasetBordersVisibility();
+  }
+});
+
+function toggleDatasetBordersVisibility() {
+  let settings = K.ls.get('settings');
+  let buttonState = K.ls.get('show-dataset-borders-state') === 'true';
+  let showBorders = false;
+  let showOrigin = false;
+  let showDuringPlay = false;
+  let gameMode = tomni.gameMode;
+
+  if (settings) {
+    settings = JSON.parse(settings);
+    showBorders = settings['show-dataset-borders-button'];
+    showOrigin = settings['dataset-borders-show-origin'];
+    showDuringPlay = settings['dataset-borders-show-during-play'];
+  }
+
+  // borders should be shown only if:
+  // the showButton option in Settings is true
+  // the state of the button is true
+  // we are not in gameMode or we are in gameMode and showDuringPlay option is true
+  if (settings['show-dataset-borders-button'] && buttonState &&
+  (gameMode && showDuringPlay || !gameMode)) {
+    addDatasetBorders();
+    if (showOrigin) {
+      addDatasetOrigin();
+    }
+  }
+  else {
+    removeDatasetBorders();
+    removeDatasetOrigin();
+  }
+}
+
+function createDatasetBordersCube(coords, filled = false) {
+  let lengthX = coords.maxX - coords.minX;
+  let lengthY = coords.maxY - coords.minY;
+  let lengthZ = coords.maxZ - coords.minZ;
+
+  let halfX = lengthX / 2;
+  let halfY = lengthY / 2;
+  let halfZ = lengthZ / 2;
+  
+  let material, cube;
+
+  let box = new THREE.BoxGeometry(lengthX, lengthY, lengthZ);
+
+  if (!filled) {
+    let edges = new THREE.EdgesGeometry(box);
+    material = new THREE.LineBasicMaterial({color: 0xffffff, linewidth: 1});
+    cube = new THREE.LineSegments(edges, material);
+  }
+  else {
+    material = new THREE.MeshBasicMaterial({color: 0xff9200});
+    cube = new THREE.Mesh(box, material);
+  }
+
+
+  cube.position.set(coords.minX + halfX, coords.minY + halfY, coords.minZ + halfZ);
+  
+  return cube;
+};
+
+let datasetBordersE2198Cube = createDatasetBordersCube({
+  minX: 466,  minY: 498,   minZ: 434,
+  maxX: 4306, maxY: 20690, maxZ: 12786
+});
+
+let datasetBordersE2198OriginCube = createDatasetBordersCube({
+  minX: 466,       minY: 498,       minZ: 434,
+  maxX: 466 + 128, maxY: 498 + 128, maxZ: 434 + 128
+}, true);
+
+let datasetBordersZFishCube = createDatasetBordersCube({
+  minX: 68800,  minY: 59840,  minZ: 737640,
+  maxX: 423360, maxY: 230720, maxZ: 819000
+});
+
+let datasetBordersZFishOriginCube = createDatasetBordersCube({
+  minX: 68800,        minY: 59840,        minZ: 737640,
+  maxX: 68800 + 2560, maxY: 59840 + 2560, maxZ: 737640 + 2560
+}, true);
+
+function addDatasetBorders() {
+  let dataset = tomni.getCurrentCell().info.dataset_id;
+  let world = tomni.threeD.getWorld();
+
+  if (dataset === 1) {
+    world.remove(datasetBordersZFishCube);
+    world.add(datasetBordersE2198Cube);
+  }
+  else if (dataset === 11) {
+    world.remove(datasetBordersE2198Cube);
+    world.add(datasetBordersZFishCube);
+  }
+
+  tomni.threeD.render();
+}
+
+function removeDatasetBorders() {
+  let world = tomni.threeD.getWorld();
+
+  world.remove(datasetBordersE2198Cube);
+  world.remove(datasetBordersZFishCube);
+
+  tomni.threeD.render();
+}
+
+function addDatasetOrigin() {
+  let dataset = tomni.getCurrentCell().info.dataset_id;
+  let world = tomni.threeD.getWorld();
+
+  if (dataset === 1) {
+    world.remove(datasetBordersZFishOriginCube);
+    world.add(datasetBordersE2198OriginCube);
+  }
+  else if (dataset === 11) {
+    world.remove(datasetBordersE2198OriginCube);
+    world.add(datasetBordersZFishOriginCube);
+  }
+
+  tomni.threeD.render();
+}
+
+function removeDatasetOrigin() {
+  let world = tomni.threeD.getWorld();
+
+  world.remove(datasetBordersE2198OriginCube);
+  world.remove(datasetBordersZFishOriginCube);
+
+  tomni.threeD.render();
+}
+
+function setDatasetBorderButtonAndOptionsVisiblity(state) {
+  let buttonState = K.ls.get('show-dataset-borders-state') === 'true';
+  let settings = K.ls.get('settings');
+  let originVisibility = false;
+  
+  if (settings) {
+    settings = JSON.parse(settings);
+    originVisibility = settings['dataset-borders-show-origin'];
+  }
+
+  if (state) {
+    K.gid('dataset-borders-show-origin').parentNode.parentNode.style.display = 'flex';
+    K.gid('dataset-borders-show-during-play').parentNode.parentNode.style.display = 'flex';
+    if (tomni && tomni.cell && buttonState) {
+      addDatasetBorders();
+      if (originVisibility) {
+        addDatasetOrigin();
+      }
+    }
+  }
+  else {
+    K.gid('dataset-borders-show-origin').parentNode.parentNode.style.display = 'none';
+    K.gid('dataset-borders-show-during-play').parentNode.parentNode.style.display = 'none';
+    if (tomni && tomni.cell) {
+      removeDatasetBorders();
+      removeDatasetOrigin();
+    }
+  }
+  
+  let intv = setInterval(function () {
+    if (!K.gid('show-dataset-borders')) {
+      return;
+    }
+    clearInterval(intv);
+    
+    K.gid('show-dataset-borders').style.display = state ? 'inline-block' : 'none';
+  }, 100);
+}
+
+function setDatasetOriginVisibility(state) {
+  let buttonState = K.ls.get('show-dataset-borders-state') === 'true';
+  let settings = K.ls.get('settings');
+  let buttonVisibility = false;
+  
+  if (settings) {
+    settings = JSON.parse(settings);
+    buttonVisibility = settings['show-dataset-borders-button'];
+  }
+
+  if (tomni && tomni.cell) {
+    if (state && buttonState && buttonVisibility) {
+      addDatasetOrigin();
+    }
+    else {
+      removeDatasetOrigin();
+    }
+  }
+}
+
 $(document).on('ews-setting-changed', function (evt, data) {
   switch (data.setting) {
     case 'ew-hide-blog':
@@ -309,6 +556,20 @@ $(document).on('ews-setting-changed', function (evt, data) {
     case 'show-remove-duplicate-segs-button':
       setReapAuxButtonVisibility('ews-remove-duplicates-button', data.state);
       break;
+    case 'show-dataset-borders-button':
+      setDatasetBorderButtonAndOptionsVisiblity(data.state);
+      break;
+    case 'dataset-borders-show-origin':
+      setDatasetOriginVisibility(data.state);
+      break;
+    case 'dataset-borders-show-during-play':
+      if (data.state) {
+        toggleDatasetBordersVisibility();
+      }
+      else {
+        removeDatasetBorders();
+        removeDatasetOrigin();
+      }
   }
 });
 
@@ -360,6 +621,22 @@ $('#ews-remove-duplicates-button')
       tomni.f('deselect', {segids: dupes});
     }
   });
+
+let intv3 = setInterval(function () {
+  if (!K.gid('gameTools')) {
+    return;
+  }
+  
+  clearInterval(intv3);
+
+  $('#gameTools').prepend('<span id="show-dataset-borders"></span>');
+  $('#show-dataset-borders').click(function () {
+    let state = K.ls.get('show-dataset-borders-state') === 'true';
+    K.ls.set('show-dataset-borders-state', !state);
+    toggleDatasetBordersVisibility();
+  });
+}, 100);
+
 
 
 if (LOCAL) {
