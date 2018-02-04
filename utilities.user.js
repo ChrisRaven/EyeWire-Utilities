@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.5.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -234,6 +234,7 @@ var EwsSettings = function () {
 
   if (account.roles.scout || account.roles.scythe || account.roles.mystics || account.roles.admin) {
     add('Compact horizontal Scout\'s Log', 'ews-compact-scouts-log');
+    add('Go in and out of cube using "G"', 'go-in-and-out-of-cube-using-g');
   }
   
   if (account.roles.scythe || account.roles.mystic || account.roles.admin) {
@@ -247,7 +248,6 @@ var EwsSettings = function () {
   addIndented('Show during play/inspect', 'dataset-borders-show-during-play');
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
-  add('Go in and out of cube using "G"', 'go-in-and-out-of-cube-using-g');
 
   add('Blog', 'ew-hide-blog', '#ews-settings-group-top-buttons');
   add('Wiki', 'ew-hide-wiki', '#ews-settings-group-top-buttons');
