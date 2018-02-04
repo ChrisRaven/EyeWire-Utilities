@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.4.2
+// @version      1.5
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -186,7 +186,8 @@ var EwsSettings = function () {
     'show-remove-duplicate-segs-button': false,
     'show-dataset-borders-button': true,
     'dataset-borders-show-origin': true,
-    'dataset-borders-show-during-play': true
+    'dataset-borders-show-during-play': true,
+    'go-in-and-out-of-cube-using-g': false
   };
 
   var stored = K.ls.get('settings');
@@ -246,6 +247,7 @@ var EwsSettings = function () {
   addIndented('Show during play/inspect', 'dataset-borders-show-during-play');
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
+  add('Go in and out of cube using "G"', 'go-in-and-out-of-cube-using-g');
 
   add('Blog', 'ew-hide-blog', '#ews-settings-group-top-buttons');
   add('Wiki', 'ew-hide-wiki', '#ews-settings-group-top-buttons');
@@ -703,10 +705,30 @@ $('body').keydown(function (evt) {
     }
   }
 });
+
 // end: submit using Spacebar
 
 // tu
+if (account.roles.scout || account.roles.scythe || account.roles.mystic || account.roles.admin) {
+  $(document).keyup(function (evt) {
+    if (evt.which !== 71) {
+      return;
+    }
 
+    let settings = K.ls.get('settings');
+    if (settings) {
+      settings = JSON.parse(settings);
+      if (settings['go-in-and-out-of-cube-using-g']) {
+        if (tomni.gameMode) {
+          tomni.leave();
+        }
+        else {
+          tomni.play({inspect: tomni.getTarget()[0].id});
+        }
+      }
+    }
+  });
+}
 
 } // end: main()
 
