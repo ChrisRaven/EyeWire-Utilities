@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.5.1
+// @version      1.5.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -634,7 +634,7 @@ let intv3 = setInterval(function () {
   
   clearInterval(intv3);
 
-  $('#gameTools').prepend('<span id="show-dataset-borders"></span>');
+  $('#gameTools').prepend('<span id="show-dataset-borders" title="Show/hide dataset borders"></span>');
   $('#show-dataset-borders').click(function () {
     let state = K.ls.get('show-dataset-borders-state') === 'true';
     K.ls.set('show-dataset-borders-state', !state);
