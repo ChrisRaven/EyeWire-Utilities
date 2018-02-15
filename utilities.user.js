@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.5.2
+// @version      1.6
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -187,7 +187,8 @@ var EwsSettings = function () {
     'show-dataset-borders-button': true,
     'dataset-borders-show-origin': true,
     'dataset-borders-show-during-play': true,
-    'go-in-and-out-of-cube-using-g': false
+    'go-in-and-out-of-cube-using-g': false,
+    'dont-rotate-ov-while-in-cube': false
   };
 
   var stored = K.ls.get('settings');
@@ -248,6 +249,8 @@ var EwsSettings = function () {
   addIndented('Show during play/inspect', 'dataset-borders-show-during-play');
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
+  
+  add('Don\'t rotate OV while in cube','dont-rotate-ov-while-in-cube');
 
   add('Blog', 'ew-hide-blog', '#ews-settings-group-top-buttons');
   add('Wiki', 'ew-hide-wiki', '#ews-settings-group-top-buttons');
@@ -729,9 +732,204 @@ if (account.roles.scout || account.roles.scythe || account.roles.mystic || accou
     }
   });
 }
+/*
+let ws = new WebSocket('wss://eyewire.org:2569/chat');
+ws.onmessage = function (evt) {
+  // console.log(evt);
+  let data = evt.data;
+
+  if (!data) {
+    return;
+  }
+  
+  data = JSON.parse(data);
+  
+  if (data.cmd === 'task-completions') {
+    // console.log('uid: ', data.params.uid, ', tasks: ', data.params.tasks, ' ,cellId: ', data.params.cell);
+    let taskId = Object.keys(data.params.tasks)[0];
+    taskId = parseInt(taskId, 10);
+    if (data.params.cell == tomni.cell) {console.log('here')
+      tomni.threeD.setTarget(taskId);
+      let target = tomni.threeD.getTarget();
+    
+      // tomni.task.id = taskId;
+      let bounds = target[0].bounds;
+      let spritey4 = makeTextSprite(data.params.uid);
+      spritey4.position.set(bounds.max.x, bounds.max.y, bounds.max.z);
+      tomni.threeD.getWorld().add(spritey4);
+    }
+  }
+  
+};
+
+
+// source: https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w  -r, y);
+  ctx.quadraticCurveTo(x + w - r, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h - r, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x + r, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y + r, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+	ctx.stroke();
+}
+
+function arrayOfColorsToRGBa(arr) {
+  return 'rgba(' + arr.join(',') + ')';
+}
+
+// source: https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
+function makeTextSprite(message, parameters) {
+	let fontFace = 'Open Sans';
+	let fontSize = 96;
+	let borderWidth = 4;
+	let borderColor = [255, 100, 255, 1.0]; // r, g, b, a
+	let bgColor = [255, 100, 255, 0.8]; // ditto
+  let textColor = [255, 255, 255, 1.0] // ditto
+  let fontStyle = fontSize + 'px ' + fontFace;
+		
+	let canvas = document.createElement('canvas');
+	let context = canvas.getContext('2d');
+
+	context.font = fontStyle; // first we have to set font face and size for measurements...
+	// get size data (height depends only on font size)
+	let metrics = context.measureText(message);
+	let textWidth = metrics.width;
+
+  canvas.width = textWidth + borderWidth * 2;
+
+  context.font = fontStyle; // ... then we have to set it again after resizing canvas
+
+	context.fillStyle = arrayOfColorsToRGBa(bgColor);
+	context.strokeStyle = arrayOfColorsToRGBa(borderColor);
+
+	context.lineWidth = borderWidth;
+	roundRect(context, borderWidth / 2, borderWidth / 2, textWidth + borderWidth, fontSize * 1.4 + borderWidth, 6);
+	// 1.4 is extra height factor for text below baseline: g,j,p,q.
+
+	// text color
+	context.fillStyle = arrayOfColorsToRGBa(textColor);
+	context.fillText(message, borderWidth, fontSize + borderWidth);
+	
+	// canvas contents will be used for a texture
+	let texture = new THREE.CanvasTexture(canvas);
+
+	let spriteMaterial = new THREE.SpriteMaterial({map: texture});
+	let sprite = new THREE.Sprite(spriteMaterial);
+	sprite.scale.set(canvas.width, 100, 1);
+
+	return sprite;
+}
+
+let spritey1 = makeTextSprite('r3');
+spritey1.position.set(2186, 7026, 8978);
+tomni.threeD.getWorld().add(spritey1);
+// console.log(spritey1)
+
+let spritey2 = makeTextSprite('KrzysztofKruk');
+spritey2.position.set(2386, 7026, 8978);
+tomni.threeD.getWorld().add(spritey2);
+
+let spritey3 = makeTextSprite('amy');
+spritey3.position.set(2186, 7226, 8978);
+tomni.threeD.getWorld().add(spritey3);
+
+let spritey4 = makeTextSprite('randompersonjci');
+spritey4.position.set(2386, 7226, 8978);
+tomni.threeD.getWorld().add(spritey4);
+*/
+/*
+  websocket-task-completions:
+  
+  cell: cellId
+  uid: uid
+  tasks: {
+    cubeId: vote_weight
+  }
+  
+  websocket-cubeAdd
+  websocket-cubeDel
+*/
 
 } // end: main()
 
 
+let cameraProps, tomniRotation, threeDZoom;
+
+function save() {
+  let settings = K.ls.get('settings');
+  if (!settings) {
+    return;
+  }
+
+  settings = JSON.parse(settings);
+  if (!settings['dont-rotate-ov-while-in-cube']) {
+    return;
+  }
+
+  let camera = tomni.threeD.getCamera();
+
+  tomniRotation = {
+    x: tomni.center.rotation.x,
+    y: tomni.center.rotation.y,
+    z: tomni.center.rotation.z
+  };
+
+  threeDZoom = tomni.threeD.zoom;
+
+  cameraProps = {
+    position: {
+      x: camera.position.x,
+      y: camera.position.y,
+      z: camera.position.z
+    },
+    rotation: {
+      x: camera.rotation.x,
+      y: camera.rotation.y,
+      z: camera.rotation.z
+    },
+    up: {
+      x: camera.up.x,
+      y: camera.up.y,
+      z: camera.up.z
+    },
+    fov: camera.fov
+  };
+}
+
+function restore() {
+  let settings = K.ls.get('settings');
+  if (!settings) {
+    return;
+  }
+
+  settings = JSON.parse(settings);
+  if (!settings['dont-rotate-ov-while-in-cube']) {
+    return;
+  }
+
+  let camera = tomni.threeD.getCamera();
+
+  camera.fov = cameraProps.fov;
+  camera.position.set(cameraProps.position.x, cameraProps.position.y, cameraProps.position.z);
+  camera.rotation.set(cameraProps.rotation.x, cameraProps.rotation.y, cameraProps.rotation.z);
+  camera.up.set(cameraProps.up.x, cameraProps.up.y, cameraProps.up.z);
+  tomni.center.rotation.set(tomniRotation.x, tomniRotation.y, tomniRotation.z);
+  tomni.threeD.zoom = threeDZoom;
+  camera.updateProjectionMatrix();
+  tomni.forceRedraw();
+}
+
+
+$(document).on('cube-enter-triggered.utilities', save);
+$(document).on('cube-leave-triggered.utilities', restore);
+
+//// https://eyewire.org/?show_stashed=true
 
 })(); // end: wrapper
