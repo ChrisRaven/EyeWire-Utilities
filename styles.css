@@ -7,3 +7,14 @@
   background-position: 50%;
   cursor: pointer;
 }
+  
+#ews-restore-seed-button {
+  background-image: url(regrow_seed_vf-20.svg);
+  background-size: 90%;
+}
+
+
+#ews-remove-duplicates-button {
+  background-image: url(remove_dupe-vf-21.svg);
+  background-size: 90%;
+}

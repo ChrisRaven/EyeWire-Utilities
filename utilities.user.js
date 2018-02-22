@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.6.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -240,7 +240,7 @@ var EwsSettings = function () {
   
   if (account.roles.scythe || account.roles.mystic || account.roles.admin) {
     add('Auto Refresh ShowMeMe', 'ews-auto-refresh-showmeme');
-    add('Show Restore Seed button', 'show-restore-seed-button');
+    add('Show Regrow Seed button', 'show-restore-seed-button');
     add('Show Remove Dupes button', 'show-remove-duplicate-segs-button');
   }
   
@@ -592,8 +592,8 @@ let intv2 = setInterval(function () {
 }, 100);
 // end: SETTINGS
 
-$('#editActions').append('<button class="reapAuxButton" id="ews-restore-seed-button" title="Restore Seed Segments">RS</button>');
-$('#editActions').append('<button class="reapAuxButton" id="ews-remove-duplicates-button" title="Remove Duplicate Segments">RD</button>');
+$('#editActions').append('<button class="reapAuxButton" id="ews-remove-duplicates-button" title="Remove Duplicate Segments">&nbsp;</button>');
+$('#editActions').append('<button class="reapAuxButton" id="ews-restore-seed-button" title="Regrow Seed">&nbsp;</button>');
 
 $('#ews-restore-seed-button')
   .css({
@@ -601,7 +601,7 @@ $('#ews-restore-seed-button')
     'left': '50%',
     'position': 'absolute',
     'margin-top': 'auto',
-    'margin-left': '270px'
+    'margin-left': '315px'
   })
   .click(function () {
     tomni.f('select', {segids: tomni.task.seeds()});
@@ -613,7 +613,7 @@ $('#ews-remove-duplicates-button')
     'left': '50%',
     'position': 'absolute',
     'margin-top': 'auto',
-    'margin-left': '315px'
+    'margin-left': '270px'
   })
   .click(function () {
     let dupes = tomni.task.duplicates;
@@ -843,7 +843,7 @@ tomni.threeD.getWorld().add(spritey3);
 let spritey4 = makeTextSprite('randompersonjci');
 spritey4.position.set(2386, 7226, 8978);
 tomni.threeD.getWorld().add(spritey4);
-*/
+
 /*
   websocket-task-completions:
   
@@ -859,7 +859,7 @@ tomni.threeD.getWorld().add(spritey4);
 
 } // end: main()
 
-
+/*
 let cameraProps, tomniRotation, threeDZoom;
 
 function save() {
@@ -929,7 +929,7 @@ function restore() {
 
 $(document).on('cube-enter-triggered.utilities', save);
 $(document).on('cube-leave-triggered.utilities', restore);
-
+*/
 //// https://eyewire.org/?show_stashed=true
 
 })(); // end: wrapper
