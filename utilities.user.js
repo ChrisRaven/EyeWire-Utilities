@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.6.2
+// @version      1.6.2.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -328,7 +328,7 @@ $(document).on('cube-enter-triggered.utilities', function () {
   
   if (settings) {
     settings = JSON.parse(settings);
-    showInCube = settings['dataset-borders-show-during-play'] === null ? true : settings['dataset-borders-show-during-play'];
+    showInCube = settings['dataset-borders-show-during-play'] === undefined ? true : settings['dataset-borders-show-during-play'];
   }
   
   if (!showInCube) {
@@ -343,7 +343,7 @@ $(document).on('cube-leave-triggered.utilities', function () {
 
   if (settings) {
     settings = JSON.parse(settings);
-    showInCube = settings['dataset-borders-show-during-play'] === null ? true : settings['dataset-borders-show-during-play'];
+    showInCube = settings['dataset-borders-show-during-play'] === undefined ? true : settings['dataset-borders-show-during-play'];
   }
   
   // we only have to take care, when in-cube is turned off
@@ -362,9 +362,9 @@ function toggleDatasetBordersVisibility() {
 
   if (settings) {
     settings = JSON.parse(settings);
-    showBorders = settings['show-dataset-borders-button'] === null ? true : settings['show-dataset-borders-button'];
-    showOrigin = settings['dataset-borders-show-origin'] === null ? true : settings['dataset-borders-show-origin'];
-    showDuringPlay = settings['dataset-borders-show-during-play'] === null ? true : settings['dataset-borders-show-during-play'];
+    showBorders = settings['show-dataset-borders-button'] === undefined ? true : settings['show-dataset-borders-button'];
+    showOrigin = settings['dataset-borders-show-origin'] === undefined ? true : settings['dataset-borders-show-origin'];
+    showDuringPlay = settings['dataset-borders-show-during-play'] === undefined ? true : settings['dataset-borders-show-during-play'];
   }
 
   // borders should be shown only if:
@@ -490,7 +490,7 @@ function setDatasetBorderButtonAndOptionsVisiblity(state) {
   
   if (settings) {
     settings = JSON.parse(settings);
-    originVisibility = settings['dataset-borders-show-origin'] === null ? true : settings['dataset-borders-show-origin'];
+    originVisibility = settings['dataset-borders-show-origin'] === undefined ? true : settings['dataset-borders-show-origin'];
   }
 
   if (state) {
@@ -529,7 +529,7 @@ function setDatasetOriginVisibility(state) {
   
   if (settings) {
     settings = JSON.parse(settings);
-    buttonVisibility = settings['show-dataset-borders-button'] === null ? true : settings['show-dataset-borders-button'];
+    buttonVisibility = settings['show-dataset-borders-button'] === undefined ? true : settings['show-dataset-borders-button'];
   }
 
   if (tomni && tomni.cell) {
