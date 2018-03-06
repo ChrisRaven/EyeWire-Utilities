@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.6.2.1
+// @version      1.6.2.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -484,7 +484,7 @@ function removeDatasetOrigin() {
 }
 
 function setDatasetBorderButtonAndOptionsVisiblity(state) {
-  let buttonState = K.ls.get('show-dataset-borders-state') === 'true';
+  let buttonState = K.ls.get('show-dataset-borders-state') === null ? true : K.ls.get('show-dataset-borders-state') === 'true';
   let settings = K.ls.get('settings');
   let originVisibility = false;
   
@@ -523,7 +523,7 @@ function setDatasetBorderButtonAndOptionsVisiblity(state) {
 }
 
 function setDatasetOriginVisibility(state) {
-  let buttonState = K.ls.get('show-dataset-borders-state') === 'true';
+  let buttonState = K.ls.get('show-dataset-borders-state') === null ? true : K.ls.get('show-dataset-borders-state') === 'true';
   let settings = K.ls.get('settings');
   let buttonVisibility = false;
   
