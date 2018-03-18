@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.6.2.2
+// @version      1.6.3
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -188,7 +188,8 @@ var EwsSettings = function () {
     'dataset-borders-show-origin': true,
     'dataset-borders-show-during-play': true,
     'go-in-and-out-of-cube-using-g': false,
-    'dont-rotate-ov-while-in-cube': false
+    'dont-rotate-ov-while-in-cube': false,
+    'turn-off-zoom-by-spacebar': false
   };
 
   var stored = K.ls.get('settings');
@@ -249,6 +250,7 @@ var EwsSettings = function () {
   addIndented('Show during play/inspect', 'dataset-borders-show-during-play');
 
   add('Submit using Spacebar', 'ews-submit-using-spacebar');
+  add('Turn off zooming using Spacebar', 'ews-turn-off-zoom-by-spacebar');
   
   add('Don\'t rotate OV while in cube','dont-rotate-ov-while-in-cube');
 
@@ -335,6 +337,8 @@ $(document).on('cube-enter-triggered.utilities', function () {
     removeDatasetBorders();
     removeDatasetOrigin();
   }
+  
+  setReapAuxButtonVisibility('ews-remove-duplicates-button', tomni.getTarget()[0].status === 11);
 });
 
 $(document).on('cube-leave-triggered.utilities', function () {
@@ -686,10 +690,17 @@ $(document).on('websocket-task-completions', function (event, data) {
 
 // submit using Spacebar
 $('body').keydown(function (evt) {
-  var
-    btn;
+  let btn;
+  let submit = settings.get('ews-submit-using-spacebar');
+  let turnOffZoom = settings.get('ews-turn-off-zoom-by-spacebar');
 
-  if (evt.keyCode === 32 && tomni.gameMode && settings.get('ews-submit-using-spacebar')) {
+  if (evt.keyCode === 32 && tomni.gameMode && (submit || turnOffZoom)) {
+    evt.stopPropagation();
+    
+    if (turnOffZoom && !submit) {
+      return;
+    }
+
     if (!tomni.task.inspect) {
       btn = K.gid('actionGo');
     }
@@ -703,7 +714,6 @@ $('body').keydown(function (evt) {
     }
 
     if (btn) {
-      evt.stopPropagation();
       btn.click();
     }
   }
