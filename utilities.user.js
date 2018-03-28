@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.7.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -518,8 +518,8 @@ if (LOCAL) {
     clearInterval(intv2);
 
     $(document).trigger('ews-setting-changed', {
-      setting: 'ews-compact-scouts-log',
-      state: settings.getValue('ews-compact-scouts-log')
+      setting: 'compact-scouts-log',
+      state: settings.getValue('compact-scouts-log')
     });
     
       // stop leaking of shortcuts from SL
