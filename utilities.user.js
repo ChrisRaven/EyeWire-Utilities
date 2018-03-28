@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.6.3.1
+// @version      1.7
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -12,7 +12,7 @@
 /*jshint esversion: 6 */
 /*globals $, account, tomni, THREE */ 
 
-var LOCAL = false;
+let LOCAL = false;
 if (LOCAL) {
   console.log('%c--== TURN OFF "LOCAL" BEFORE RELEASING!!! ==--', "color: red; font-style: italic; font-weight: bold;");
 }
@@ -21,7 +21,7 @@ if (LOCAL) {
   'use strict';
   'esversion: 6';
 
-  var K = {
+  let K = {
     gid: function (id) {
       return document.getElementById(id);
     },
@@ -41,7 +41,7 @@ if (LOCAL) {
 
     // Source: https://stackoverflow.com/a/6805461
     injectJS: function (text, sURL) {
-      var
+      let
         tgt,
         scriptNode = document.createElement('script');
 
@@ -74,873 +74,831 @@ if (LOCAL) {
   };
 
 
-  var intv = setInterval(function () {
+  function Settings() {
+    let target;
+    
+    this.setTarget = function (selector) {
+      target = selector;
+    };
+    
+    this.getTarget = function () {
+      return target;
+    };
+    
+    this.addCategory = function (id = 'ews-utilities-settings-group', name = 'Utilities', mainTarget = 'settingsMenu') {
+      if (!K.gid(id)) {
+        $('#' + mainTarget).append(`
+          <div id="${id}" class="settings-group ews-settings-group invisible">
+            <h1>${name}</h1>
+          </div>
+        `);
+      }
+      
+      this.setTarget($('#' + id));
+    };
+
+    this.addOption = function (options) {
+      let settings = {
+        name: '',
+        id: '',
+        defaultState: false,
+        indented: false
+      }
+
+      $.extend(settings, options);
+      let storedState = K.ls.get(settings.id);
+      let state = storedState === null ? settings.defaultState : storedState.toLowerCase() === 'true';
+
+      target.append(`
+        <div class="setting" id="${settings.id}-wrapper">
+          <span>${settings.name}</span>
+          <div class="checkbox ${state ? 'on' : 'off'}">
+            <div class="checkbox-handle"></div>
+            <input type="checkbox" id="${settings.id}" style="display: none;" ${state ? ' checked' : ''}>
+          </div>
+        </div>
+      `);
+      
+      if (settings.indented) {
+        K.gid(settings.id).parentNode.parentNode.style.marginLeft = '30px';
+      }
+      
+      $(`#${settings.id}-wrapper`).click(function (evt) {
+        evt.stopPropagation();
+
+        let $elem = $(this).find('input');
+        let elem = $elem[0];
+        let newState = !elem.checked;
+
+        K.ls.set(settings.id, newState);
+        elem.checked = newState;
+
+        $elem.add($elem.closest('.checkbox')).removeClass(newState ? 'off' : 'on').addClass(newState ? 'on' : 'off');
+        $(document).trigger('ews-setting-changed', {setting: settings.id, state: newState});
+      });
+      
+      $(document).trigger('ews-setting-changed', {setting: settings.id, state: state});
+    };
+    
+    this.getValue = function (optionId) {
+      let val = K.ls.get(optionId);
+      
+      if (val === null) {
+        return undefined;
+      }
+      if (val.toLowerCase() === 'true') {
+        return true;
+      }
+      if (val.toLowerCase() === 'false') {
+        return false;
+      }
+
+      return val;
+    }
+  }
+
+
+  // Top Buttons Hiding
+  function showOrHideButton(pref, state) {
+    let text = '';
+    switch (pref) {
+      case "hide-blog": text = 'Blog'; break;
+      case "hide-wiki": text = 'Wiki'; break;
+      case "hide-forum": text = 'Forum'; break;
+      case "hide-about": text = 'About'; break;
+      case "hide-faq": text = 'FAQ'; break;
+      case "hide-stats": text = 'Stats'; break;
+      default: return; // to not change anything, when some other setting was changed
+    }
+
+    if (state) {
+      $("#nav ul a:contains('" + text + "')").parent().show();
+    }
+    else {
+      $("#nav ul a:contains('" + text + "')").parent().hide();
+    }
+  }
+  // END: Top Buttons Hiding
+
+
+  // Compact Scouts' Log
+  function changeHtml(selector, text) {
+    let el = K.qS(selector);
+    if (el) {
+      el.childNodes[0].nodeValue = text;
+    }
+  }
+
+
+  function compactOrExpandScoutsLog(state) {
+    if (!K.gid('scoutsLogFloatingControls')) {
+      return;
+    }
+
+    if (state) {
+      K.gid('scoutsLogFloatingControls').style.width = 'auto';
+      K.gid('scoutsLogFloatingControls').style.padding = '1px 2px 2px 2px';
+      $('#scoutsLogFloatingControls a').css({
+        'margin-right': 0,
+        'vertical-align': 'top',
+        'width': '15px'
+      });
+      $('#scoutsLogFloatingControls a span').css({
+        'background-color': '#000',
+        'padding': 0
+      });
+      changeHtml('.sl-cell-list', 'C');
+      changeHtml('.sl-mystic', 'M');
+      changeHtml('.sl-open', 'O');
+      changeHtml('.sl-need-admin', 'A');
+      changeHtml('.sl-need-scythe', 'S');
+      changeHtml('.sl-watch', 'W');
+      changeHtml('.sl-history', 'H');
+      changeHtml('.sl-promotions', 'P');
+      changeHtml('#sl-task-details', 'D');
+      changeHtml('#sl-task-entry', 'N');
+      K.qS('#scoutsLogFloatingControls img').style.display = 'none';
+    }
+    else {
+      K.gid('scoutsLogFloatingControls').style.width = '';
+      K.gid('scoutsLogFloatingControls').style.padding = '8px';
+      $('#scoutsLogFloatingControls a').css({
+        'margin-right': '8px',
+        'vertical-align': 'top',
+        'width': ''
+      });
+      $('#scoutsLogFloatingControls a span').css({
+        'background-color': '#7a8288',
+        'padding': '3px 7px'
+      });
+      changeHtml('.sl-cell-list', 'Cell List');
+      changeHtml('.sl-mystic', 'Mystic ');
+      changeHtml('.sl-open', 'Open Tasks ');
+      changeHtml('.sl-need-admin', 'Need Admin ');
+      changeHtml('.sl-need-scythe', 'Need Scythe ');
+      changeHtml('.sl-watch', 'Watch ');
+      changeHtml('.sl-history', 'History');
+      changeHtml('.sl-promotions', 'Promotions');
+      changeHtml('#sl-task-details', 'Cube Details ');
+      changeHtml('#sl-task-entry', 'New Entry');
+      K.qS('#scoutsLogFloatingControls img').style.display = '';
+    }
+  }
+  // END: Compact Scouts' Log
+
+
+  // Remove Duplicate Segments and Regrow Seed buttons
+  $('#editActions').append('<button class="reapAuxButton" id="ews-remove-duplicates-button" title="Remove Duplicate Segments">&nbsp;</button>');
+  $('#editActions').append('<button class="reapAuxButton" id="ews-restore-seed-button" title="Regrow Seed">&nbsp;</button>');
+
+  $('#ews-restore-seed-button')
+    .css({
+      'color': 'white',
+      'left': '50%',
+      'position': 'absolute',
+      'margin-top': 'auto',
+      'margin-left': '315px'
+    })
+    .click(function () {
+      tomni.f('select', {segids: tomni.task.seeds()});
+    });
+
+  $('#ews-remove-duplicates-button')
+    .css({
+      'color': 'white',
+      'left': '50%',
+      'position': 'absolute',
+      'margin-top': 'auto',
+      'margin-left': '270px'
+    })
+    .click(function () {
+      let dupes = tomni.task.duplicates;
+      let dupeSegs = [];
+
+      if (dupes && dupes[0]) {
+        for (let i = 0; i < dupes.length; i++) {
+          dupeSegs = dupeSegs.concat(dupes[i].duplicate_segs);
+        }
+      }
+
+      if (dupeSegs) {
+        tomni.f('deselect', {segids: dupeSegs});
+      }
+    });
+
+
+  function setReapAuxButtonVisibility(id, state) {
+    K.gid(id).style.visibility = state ? 'visible' : 'hidden';
+  }
+  // END: Remove Duplicate Segments and Regrow Seed buttons
+
+
+  // Datasets' Borders
+  function toggleDatasetBordersVisibility() {
+    let buttonState = K.ls.get('show-dataset-borders-state') === 'true';
+    let showBorders = settings.getValue('show-dataset-borders-button');
+    let showOrigin = settings.getValue('dataset-border-show-origin');
+    let showDuringPlay = settings.getValue('dataset-borders-show-during-play');
+    let gameMode = tomni.gameMode;
+
+    // borders should be shown only if:
+    // the showButton option in Settings is true
+    // the state of the button is true
+    // we are not in gameMode or we are in gameMode and showDuringPlay option is true
+    if (showBorders && buttonState &&
+    (gameMode && showDuringPlay || !gameMode)) {
+      addDatasetBorders();
+      if (showOrigin) {
+        addDatasetOrigin();
+      }
+    }
+    else {
+      removeDatasetBorders();
+      removeDatasetOrigin();
+    }
+  }
+
+  function createDatasetBordersCube(coords, filled = false) {
+    let lengthX = coords.maxX - coords.minX;
+    let lengthY = coords.maxY - coords.minY;
+    let lengthZ = coords.maxZ - coords.minZ;
+
+    let halfX = lengthX / 2;
+    let halfY = lengthY / 2;
+    let halfZ = lengthZ / 2;
+    
+    let material, cube;
+
+    let box = new THREE.BoxGeometry(lengthX, lengthY, lengthZ);
+
+    if (!filled) {
+      let edges = new THREE.EdgesGeometry(box);
+      material = new THREE.LineBasicMaterial({color: 0xffffff, linewidth: 1});
+      cube = new THREE.LineSegments(edges, material);
+    }
+    else {
+      material = new THREE.MeshBasicMaterial({color: 0xff9200});
+      cube = new THREE.Mesh(box, material);
+    }
+
+
+    cube.position.set(coords.minX + halfX, coords.minY + halfY, coords.minZ + halfZ);
+    
+    return cube;
+  };
+
+  let datasetBordersE2198Cube = createDatasetBordersCube({
+    minX: 466,  minY: 498,   minZ: 434,
+    maxX: 4306, maxY: 20690, maxZ: 12786
+  });
+
+  let datasetBordersE2198OriginCube = createDatasetBordersCube({
+    minX: 466,       minY: 498,       minZ: 434,
+    maxX: 466 + 128, maxY: 498 + 128, maxZ: 434 + 128
+  }, true);
+
+  let datasetBordersZFishCube = createDatasetBordersCube({
+    minX: 68800,  minY: 59840,  minZ: 737640,
+    maxX: 423360, maxY: 230720, maxZ: 819000
+  });
+
+  let datasetBordersZFishOriginCube = createDatasetBordersCube({
+    minX: 68800,        minY: 59840,        minZ: 737640,
+    maxX: 68800 + 2560, maxY: 59840 + 2560, maxZ: 737640 + 2560
+  }, true);
+
+  function addDatasetBorders() {
+    let dataset = (tomni && tomni.cell) ? tomni.getCurrentCell().info.dataset_id : 1;
+    let world = tomni.threeD.getWorld();
+
+    if (dataset === 1) {
+      world.remove(datasetBordersZFishCube);
+      world.add(datasetBordersE2198Cube);
+    }
+    else if (dataset === 11) {
+      world.remove(datasetBordersE2198Cube);
+      world.add(datasetBordersZFishCube);
+    }
+
+    tomni.threeD.render();
+  }
+
+  function removeDatasetBorders() {
+    let world = tomni.threeD.getWorld();
+
+    world.remove(datasetBordersE2198Cube);
+    world.remove(datasetBordersZFishCube);
+
+    tomni.threeD.render();
+  }
+
+  function addDatasetOrigin() {
+    let dataset = (tomni && tomni.cell) ? tomni.getCurrentCell().info.dataset_id : 1;
+    let world = tomni.threeD.getWorld();
+
+    if (dataset === 1) {
+      world.remove(datasetBordersZFishOriginCube);
+      world.add(datasetBordersE2198OriginCube);
+    }
+    else if (dataset === 11) {
+      world.remove(datasetBordersE2198OriginCube);
+      world.add(datasetBordersZFishOriginCube);
+    }
+
+    tomni.threeD.render();
+  }
+
+  function removeDatasetOrigin() {
+    let world = tomni.threeD.getWorld();
+
+    world.remove(datasetBordersE2198OriginCube);
+    world.remove(datasetBordersZFishOriginCube);
+
+    tomni.threeD.render();
+  }
+
+  function setDatasetBorderButtonAndOptionsVisibility(state) {
+    let buttonState = K.ls.get('show-dataset-borders-state') === null ? true : K.ls.get('show-dataset-borders-state') === 'true';
+    let originVisibility = settings.getValue('dataset-borders-show-origin');
+
+    
+    let intv0 = setInterval(function () {
+      if (!(K.gid('dataset-borders-show-origin'))) {
+        return;
+      }
+      clearInterval(intv0);
+
+      if (state) {
+        K.gid('dataset-borders-show-origin').parentNode.parentNode.style.display = 'flex';
+        K.gid('dataset-borders-show-during-play').parentNode.parentNode.style.display = 'flex';
+        if (tomni && tomni.cell && buttonState) {
+          addDatasetBorders();
+          if (originVisibility) {
+            addDatasetOrigin();
+          }
+        }
+      }
+      else {
+        K.gid('dataset-borders-show-origin').parentNode.parentNode.style.display = 'none';
+        K.gid('dataset-borders-show-during-play').parentNode.parentNode.style.display = 'none';
+        if (tomni && tomni.cell) {
+          removeDatasetBorders();
+          removeDatasetOrigin();
+        }
+      }
+      
+      let intv = setInterval(function () {
+        if (!K.gid('show-dataset-borders')) {
+          return;
+        }
+        clearInterval(intv);
+        
+        K.gid('show-dataset-borders').style.display = state ? 'inline-block' : 'none';
+      }, 100);
+    }, 100);
+  }
+
+  function setDatasetOriginVisibility(state) {
+    let buttonState = K.ls.get('show-dataset-borders-state') === null ? true : K.ls.get('show-dataset-borders-state') === 'true';
+    let buttonVisibility = settings.getValue('show-dataset-borders-button');
+
+    if (tomni && tomni.cell) {
+      if (state && buttonState && buttonVisibility) {
+        addDatasetOrigin();
+      }
+      else {
+        removeDatasetOrigin();
+      }
+    }
+  }
+
+    
+  $(document).on('cell-info-ready-triggered.utilities', toggleDatasetBordersVisibility);
+
+  $(document).on('cube-enter-triggered.utilities', function () {
+    let settings = K.ls.get('settings');
+    let showInCube = false;
+    
+    if (settings) {
+      settings = JSON.parse(settings);
+      showInCube = settings['dataset-borders-show-during-play'] === undefined ? true : settings['dataset-borders-show-during-play'];
+    }
+    
+    if (!showInCube) {
+      removeDatasetBorders();
+      removeDatasetOrigin();
+    }
+    
+    let d = tomni.task.duplicates;
+    setReapAuxButtonVisibility('ews-remove-duplicates-button', d && d[0] && d[0].duplicate_segs.length);
+  });
+
+  $(document).on('cube-leave-triggered.utilities', function () {
+    let settings = K.ls.get('settings');
+    let showInCube = false;
+
+    if (settings) {
+      settings = JSON.parse(settings);
+      showInCube = settings['dataset-borders-show-during-play'] === undefined ? true : settings['dataset-borders-show-during-play'];
+    }
+    
+    // we only have to take care, when in-cube is turned off
+    if (!showInCube) {
+      toggleDatasetBordersVisibility();
+    }
+  });
+  // END: Datasets' Borders
+
+
+  // Scouts' Log should be compacted only when it's already visible
+  let intv2 = setInterval(function () {
+    if (!K.qS('.sl-cell-list')) {
+      return;
+    }
+    clearInterval(intv2);
+
+    $(document).trigger('ews-setting-changed', {
+      setting: 'ews-compact-scouts-log',
+      state: settings.getValue('ews-compact-scouts-log')
+    });
+    
+      // stop leaking of shortcuts from SL
+    $('#slPanel').on('keyup', '#sl-action-notes', function (evt) {//console.log(evt.which)
+      if ([71, 84, 48, 49, 50, 51, 52, 53, 54].includes(evt.which)) {
+        /*
+          71 = g, G - go in and out of cube using "G"
+          84 = t, T - custom highlight color change
+          48 .. 54 = 0 .. 6 - heatmaps changing
+        */
+        evt.stopPropagation();
+      }
+    });
+
+  }, 100);
+
+
+  // we have to wait for the bottom-right corner icons to be added to the page
+  let intv3 = setInterval(function () {
+    if (!K.gid('gameTools')) {
+      return;
+    }
+
+    if (account.can('scout scythe mystic admin') && !K.gid('scoutsLogButton')) {
+      return;
+    }
+    
+    clearInterval(intv3);
+
+    $('#gameTools').prepend('<span id="show-dataset-borders" title="Show/hide dataset borders"></span>');
+    let state = K.ls.get('show-dataset-borders-state');
+    if (state === undefined) {
+      K.ls.set('show-dataset-borders-state', true);
+    }
+    
+    switchSLButtons(settings.getValue('switch-sl-buttons'));
+    
+    $('#show-dataset-borders').click(function () {
+      let state = K.ls.get('show-dataset-borders-state') === 'true';
+      K.ls.set('show-dataset-borders-state', !state);
+      toggleDatasetBordersVisibility();
+    });
+  }, 50);
+
+
+
+
+
+  // autorefresh show-me-me
+  $(document).on('websocket-task-completions', function (event, data) {
+    if (data.uid !== account.account.uid) {
+      return;
+    }
+
+    let
+      btn = $('.showmeme button');
+
+    if (!btn.hasClass('on1') && settings.getValue('auto-refresh-showmeme')) {
+      if (btn.hasClass('on2')) {
+        btn.click().click().click();
+      }
+      else {
+        btn.click();
+
+        setTimeout(function () {
+          btn.click();
+          setTimeout(function () {
+            btn.click();
+          }, 500);
+        }, 500);
+      }
+
+    }
+  });
+  // END:  autorefresh show-me-me
+
+  // submit using Spacebar
+  $('body').keydown(function (evt) {
+    let btn;
+    let submit = settings.getValue('submit-using-spacebar');
+    let turnOffZoom = settings.getValue('turn-off-zoom-by-spacebar');
+
+    if (evt.keyCode === 32 && tomni.gameMode && (submit || turnOffZoom)) {
+      evt.stopPropagation();
+      
+      if (turnOffZoom && !submit) {
+        return;
+      }
+
+      if (!tomni.task.inspect) {
+        btn = K.gid('actionGo');
+      }
+      else {
+        if (account.can('scythe mystic admin')) {
+          btn = K.gid('saveGT');
+        }
+        else {
+          btn = K.gid('flagCube');
+        }
+      }
+
+      if (btn) {
+        btn.click();
+      }
+    }
+  });
+  // END: submit using Spacebar
+  
+  
+  function moveFreeToTheLeftOfHighlight(state) {
+    if (state) {
+      $('#cubeInspectorFloatingControls .controls').prepend($('.control.freeze'));
+    }
+    else {
+      $('.control.complete').before($('.control.freeze'));
+    }
+  }
+  
+  
+  function switchSLButtons(state) {
+    if (state) {
+      $('#settingsButton').before($('#scoutsLogButton'));
+    }
+    else {
+      $('#settingsButton').before($('#inspectPanelButton'));
+    }
+  }
+  
+
+
+
+  $(document).on('ews-setting-changed', function (evt, data) {
+    switch (data.setting) {
+      case 'hide-blog':
+      case 'hide-about':
+      case 'hide-faq':
+      case 'hide-forum':
+      case 'hide-stats':
+      case 'hide-wiki':
+        showOrHideButton(data.setting, data.state);
+        break;
+      case 'compact-scouts-log':
+        compactOrExpandScoutsLog(data.state);
+        break;
+      case 'show-restore-seed-button':
+        setReapAuxButtonVisibility('ews-restore-seed-button', data.state);
+        break;
+      case 'show-remove-duplicate-segs-button':
+        setReapAuxButtonVisibility('ews-remove-duplicates-button', data.state);
+        break;
+      case 'show-dataset-borders-button':
+        setDatasetBorderButtonAndOptionsVisibility(data.state);
+        break;
+      case 'dataset-borders-show-origin':
+        setDatasetOriginVisibility(data.state);
+        break;
+      case 'dataset-borders-show-during-play':
+        if (data.state) {
+          toggleDatasetBordersVisibility();
+        }
+        else {
+          removeDatasetBorders();
+          removeDatasetOrigin();
+        }
+        break;
+      case 'move-freeze-to-the-left-of-highlight':
+        moveFreeToTheLeftOfHighlight(data.state);
+        break;
+      case 'switch-sl-buttons':
+        switchSLButtons(data.state);
+        break;
+    }
+  });
+
+
+  let settings;
+
+  function main() {
+      
+    if (!K.ls.get('utilities-settings-2018-03-27-update')) {
+      let props = K.ls.get('settings');
+      if (props) {
+        props = JSON.parse(props);
+        Object.keys(props).forEach(function (key, index) {
+          if (key.indexOf('ews-') === 0) {
+            K.ls.set(key.slice(4), props[key]);
+          }
+          else if (key.indexOf('ew-') === 0) {
+            K.ls.set(key.slice(3), props[key]);
+          }
+          else {
+            K.ls.set(key, props[key]);
+          }
+        });
+        K.ls.remove('settings');
+      }
+
+      K.ls.set('utilities-settings-2018-03-27-update', true);
+    }
+    
+    
+    if (LOCAL) {
+      K.addCSSFile('http://127.0.0.1:8887/styles.css');
+    }
+    else {
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=2');
+    }
+    
+    K.injectJS(`
+      $(window)
+        .on('cell-info-ready', function (e, data) {
+          $(document).trigger('cell-info-ready-triggered.utilities', data);
+        })
+        .on('cube-enter', function (e, data) {
+          $(document).trigger('cube-enter-triggered.utilities', data);
+        })
+        .on('cube-leave', function (e, data) {
+          $(document).trigger('cube-leave-triggered.utilities', data);
+        });
+      `);
+
+      
+    settings =  new Settings();
+    settings.addCategory();
+    
+    if (account.can('scout scythe mystics admin')) {
+      settings.addOption({
+        name: 'Compact horizontal Scout\'s Log',
+        id: 'compact-scouts-log'
+      });
+    }
+    
+    if (account.can('scythe mystic admin')) {
+      settings.addOption({
+        name: 'Auto Refresh ShowMeMe',
+        id: 'auto-refresh-showmeme'
+      });
+      settings.addOption({
+        name: 'Show Regrow Seed button',
+        id: 'show-restore-seed-button'
+      });
+      settings.addOption({
+        name: 'Show Remove Dupes button',
+        id: 'show-remove-duplicate-segs-button'
+      })
+    }
+    
+    settings.addOption({
+      name: 'Show Dataset Borders button',
+      id: 'show-dataset-borders-button',
+      defaultState: true
+    });
+      settings.addOption({
+        name: 'Show origin',
+        id: 'dataset-borders-show-origin',
+        defaultState: true,
+        indented: true
+      });
+      settings.addOption({
+        name: 'Show during play/inspect',
+        id: 'dataset-borders-show-during-play',
+        defaultState: true,
+        indented: true
+      });
+    settings.addOption({
+      name: 'Submit using Spacebar',
+      id: 'submit-using-spacebar'
+    });
+    settings.addOption({
+      name: 'Don\'t rotate OV while in cube',
+      id: 'dont-rotate-ov-while-in-cube'
+    });
+    settings.getTarget().append('<div class="setting"><div class="minimalButton" id="ews-additional-options">Additional Options</div></div>');
+    
+    settings.addCategory('ews-utilities-top-buttons-settings-group', 'Top buttons');
+    settings.addOption({
+      name: 'Blog',
+      id: 'hide-blog'
+    });
+    settings.addOption({
+      name: 'Wiki',
+      id: 'hide-wiki'
+    });
+    settings.addOption({
+      name: 'Forum',
+      id: 'hide-forum'
+    });
+    settings.addOption({
+      name: 'About',
+      id: 'hide-about'
+    });
+    settings.addOption({
+      name: 'FAQ',
+      id: 'hide-faq'
+    });
+    if (K.gid('ewsLinkWrapper')) {
+      settings.addOption({
+        name: 'Stats',
+        id: 'hide-stats'
+      });
+    }
+
+    
+    $('body').append('<div class="help-menu black more" id="ews-additional-options-popup"></div>');
+    
+    settings.addCategory('ews-additional-options-category', 'Additional Options', 'ews-additional-options-popup');
+    settings.addOption({
+      name: 'Turn off zooming using Spacebar',
+      id: 'turn-off-zoom-by-spacebar'
+    });
+    if (account.can('scout scythe mystic admin')) {
+      settings.addOption({
+        name: 'Go in and out of cube using "G"',
+        id: 'go-in-and-out-of-cube-using-g'
+      });
+      settings.addOption({
+        name: 'Switch SL buttons',
+        id: 'switch-sl-buttons'
+      });
+    }
+    if (account.can('scythe mystic admin')) {
+      settings.addOption({
+        name: 'Move Freeze to the left of Highlight',
+        id: 'move-freeze-to-the-left-of-highlight'
+      });
+    }
+    
+    let popupStatus = 'closed';
+    
+    $('#ews-additional-options').click(function () {
+      let popup = K.gid('ews-additional-options-popup');
+      popup.style.display = 'block';
+
+      let windowWidth = $(window).width();
+      let windowHeight = $(window).height();
+      let popupWidth = parseInt(popup.clientWidth, 10);
+      let popupHeight = parseInt(popup.clientHeight, 10);
+
+      popup.style.left = (windowWidth / 2 - popupWidth / 2) + 'px';
+      popup.style.top = (windowHeight / 2 - popupHeight / 2) + 'px';
+      
+      popupStatus = 'opened';
+    });
+    
+    $(document).click(function (evt) {
+      if (evt.target.id !== 'ews-additional-options-popup' && popupStatus === 'opened') {
+        K.gid('ews-additional-options-popup').style.display = 'none';
+        popupStatus = 'closed';
+      }
+    });
+
+    if (account.can('scout scythe mystic admin')) {
+      $(document).keyup(function (evt) {
+        if (evt.which !== 71) {
+          return;
+        }
+
+        if (settings.getValue('go-in-and-out-of-cube-using-g')) {
+          if (tomni.gameMode) {
+            tomni.leave();
+          }
+          else if (tomni.getTarget() !== null) {
+            tomni.play({inspect: tomni.getTarget()[0].id});
+          }
+        }
+      });
+    }
+
+
+  }
+
+
+  let intv = setInterval(function () {
     if (typeof account === 'undefined' || !account.account.uid) {
       return;
     }
     clearInterval(intv);
     main();
   }, 100);
-  
-  function main() {
 
-function showOrHideButton(pref, state) {
-  var text = '';
-  switch (pref) {
-    case "ew-hide-blog": text = 'Blog'; break;
-    case "ew-hide-wiki": text = 'Wiki'; break;
-    case "ew-hide-forum": text = 'Forum'; break;
-    case "ew-hide-about": text = 'About'; break;
-    case "ew-hide-faq": text = 'FAQ'; break;
-    case "ew-hide-stats": text = 'Stats'; break;
-    default: return; // to not change anything, when some other setting was changed
-  }
 
-  if (state) {
-    $("#nav ul a:contains('" + text + "')").parent().show();
-  }
-  else {
-    $("#nav ul a:contains('" + text + "')").parent().hide();
-  }
-}
-
-function changeHtml(selector, text) {
-  let el = K.qS(selector);
-  if (el) {
-    el.childNodes[0].nodeValue = text;
-  }
-}
-
-
-function compactOrExpandScoutsLog(state) {
-  if (!K.gid('scoutsLogFloatingControls')) {
-    return;
-  }
-
-  if (state) {
-    K.gid('scoutsLogFloatingControls').style.width = 'auto';
-    K.gid('scoutsLogFloatingControls').style.padding = '1px 2px 2px 2px';
-    $('#scoutsLogFloatingControls a').css({
-      'margin-right': 0,
-      'vertical-align': 'top',
-      'width': '15px'
-    });
-    $('#scoutsLogFloatingControls a span').css({
-      'background-color': '#000',
-      'padding': 0
-    });
-    changeHtml('.sl-cell-list', 'C');
-    changeHtml('.sl-mystic', 'M');
-    changeHtml('.sl-open', 'O');
-    changeHtml('.sl-need-admin', 'A');
-    changeHtml('.sl-need-scythe', 'S');
-    changeHtml('.sl-watch', 'W');
-    changeHtml('.sl-history', 'H');
-    changeHtml('.sl-promotions', 'P');
-    changeHtml('#sl-task-details', 'D');
-    changeHtml('#sl-task-entry', 'N');
-    K.qS('#scoutsLogFloatingControls img').style.display = 'none';
-  }
-  else {
-    K.gid('scoutsLogFloatingControls').style.width = '';
-    K.gid('scoutsLogFloatingControls').style.padding = '8px';
-    $('#scoutsLogFloatingControls a').css({
-      'margin-right': '8px',
-      'vertical-align': 'top',
-      'width': ''
-    });
-    $('#scoutsLogFloatingControls a span').css({
-      'background-color': '#7a8288',
-      'padding': '3px 7px'
-    });
-    changeHtml('.sl-cell-list', 'Cell List');
-    changeHtml('.sl-mystic', 'Mystic ');
-    changeHtml('.sl-open', 'Open Tasks ');
-    changeHtml('.sl-need-admin', 'Need Admin ');
-    changeHtml('.sl-need-scythe', 'Need Scythe ');
-    changeHtml('.sl-watch', 'Watch ');
-    changeHtml('.sl-history', 'History');
-    changeHtml('.sl-promotions', 'Promotions');
-    changeHtml('#sl-task-details', 'Cube Details ');
-    changeHtml('#sl-task-entry', 'New Entry');
-    K.qS('#scoutsLogFloatingControls img').style.display = '';
-  }
-}
-
-  
-// SETTINGS
-var EwsSettings = function () {
-  // var intv;
-  var _this = this;
-  var settings = {
-    'ews-auto-refresh-showmeme': false,
-    'ews-submit-using-spacebar': false,
-    'ews-compact-scouts-log': false,
-    'ew-hide-blog': true,
-    'ew-hide-wiki': true,
-    'ew-hide-forum': true,
-    'ew-hide-about': true,
-    'ew-hide-faq': true,
-    'ew-hide-stats': true,
-    'show-restore-seed-button': false,
-    'show-remove-duplicate-segs-button': false,
-    'show-dataset-borders-button': true,
-    'dataset-borders-show-origin': true,
-    'dataset-borders-show-during-play': true,
-    'go-in-and-out-of-cube-using-g': false,
-    'dont-rotate-ov-while-in-cube': false,
-    'turn-off-zoom-by-spacebar': false
-  };
-
-  var stored = K.ls.get('settings');
-  if (stored) {
-    $.extend(settings, JSON.parse(stored));
-  }
-
-  
-  this.get = function(setting) {
-    return settings[setting];
-  };
-  
-  
-  if (!K.gid('ews-settings-group')) {
-    $('#settingsMenu').append(`
-      <div id="ews-settings-group" class="settings-group ews-settings-group invisible">
-        <h1>User Scripts Settings</h1>
-      </div>
-    `);
-  }
-  
-  $('#settingsMenu').append(`
-    <div id="ews-settings-group-top-buttons" class="settings-group ews-settings-group invisible">
-      <h1>Top buttons</h1>
-    </div>
-  `);
-  
-  function add(name, id, target = '#ews-settings-group') {
-    $(target).append(`
-      <div class="setting utilities">
-        <span>` + name + `</span>
-        <div class="checkbox">
-          <div class="checkbox-handle"></div>
-          <input type="checkbox" id="` + id + `" style="display: none;">
-        </div>
-      </div>
-    `);
-  }
-  
-  function addIndented(name, id, target) {
-    add(name, id, target);
-    K.gid(id).parentNode.parentNode.style.marginLeft = '30px';
-  }
-
-  if (account.roles.scout || account.roles.scythe || account.roles.mystics || account.roles.admin) {
-    add('Compact horizontal Scout\'s Log', 'ews-compact-scouts-log');
-    add('Go in and out of cube using "G"', 'go-in-and-out-of-cube-using-g');
-  }
-  
-  if (account.roles.scythe || account.roles.mystic || account.roles.admin) {
-    add('Auto Refresh ShowMeMe', 'ews-auto-refresh-showmeme');
-    add('Show Regrow Seed button', 'show-restore-seed-button');
-    add('Show Remove Dupes button', 'show-remove-duplicate-segs-button');
-  }
-  
-  add('Show Dataset Borders button', 'show-dataset-borders-button');
-  addIndented('Show origin', 'dataset-borders-show-origin');
-  addIndented('Show during play/inspect', 'dataset-borders-show-during-play');
-
-  add('Submit using Spacebar', 'ews-submit-using-spacebar');
-  add('Turn off zooming using Spacebar', 'ews-turn-off-zoom-by-spacebar');
-  
-  add('Don\'t rotate OV while in cube','dont-rotate-ov-while-in-cube');
-
-  add('Blog', 'ew-hide-blog', '#ews-settings-group-top-buttons');
-  add('Wiki', 'ew-hide-wiki', '#ews-settings-group-top-buttons');
-  add('Forum', 'ew-hide-forum', '#ews-settings-group-top-buttons');
-  add('About', 'ew-hide-about', '#ews-settings-group-top-buttons');
-  add('FAQ', 'ew-hide-faq', '#ews-settings-group-top-buttons');
-
-  if (K.gid('ewsLinkWrapper')) {
-      add('Stats', 'ew-hide-stats', '#ews-settings-group-top-buttons');
-  }
-
-  this.set = function(setting, value) {
-    settings[setting] = value;
-    K.ls.set('settings', JSON.stringify(settings));
-  };
-
-  this.getAll = function () {
-    return settings;
-  };
-  
-  
-// source: crazyman's script
-  $('#ews-settings-group .utilities input, #ews-settings-group-top-buttons input').each(function() {
-    var
-      elem, pref, sets;
-
-    elem = $(this);
-    pref = this.id;
-    sets = _this.getAll();
-
-    this.checked = sets[pref];
-    elem.add(elem.closest('.checkbox')).removeClass(sets[pref] ? 'off' : 'on').addClass(sets[pref] ? 'on' : 'off');
-    $(document).trigger('ews-setting-changed', {setting: pref, state: sets[pref]});
-  });
-
-  $('#ews-settings-group .utilities input, #ews-settings-group-top-buttons input').closest('div.setting').click(function(evt) {
-    var
-      $elem, elem, newState;
-
-    $elem = $(this).find('input');
-    elem = $elem[0];
-    newState = !elem.checked;
-
-    evt.stopPropagation();
-
-    elem.checked = newState;
-    _this.set(elem.id, newState);
-    $elem.add($elem.closest('.checkbox')).removeClass(newState ? 'off' : 'on').addClass(newState ? 'on' : 'off');
-    $(document).trigger('ews-setting-changed', {setting: elem.id, state: newState});
-  });
-};
-
-function setReapAuxButtonVisibility(id, state) {
-  K.gid(id).style.visibility = state ? 'visible' : 'hidden';
-}
-
-K.injectJS(`
-  $(window)
-    .on('cell-info-ready', function (e, data) {
-      $(document).trigger('cell-info-ready-triggered.utilities', data);
-    })
-    .on('cube-enter', function (e, data) {
-      $(document).trigger('cube-enter-triggered.utilities', data);
-    })
-    .on('cube-leave', function (e, data) {
-      $(document).trigger('cube-leave-triggered.utilities', data);
-    });
-  `);
-  
-$(document).on('cell-info-ready-triggered.utilities', toggleDatasetBordersVisibility);
-
-$(document).on('cube-enter-triggered.utilities', function () {
-  let settings = K.ls.get('settings');
-  let showInCube = false;
-  
-  if (settings) {
-    settings = JSON.parse(settings);
-    showInCube = settings['dataset-borders-show-during-play'] === undefined ? true : settings['dataset-borders-show-during-play'];
-  }
-  
-  if (!showInCube) {
-    removeDatasetBorders();
-    removeDatasetOrigin();
-  }
-  
-  let d = tomni.task.duplicates;
-  setReapAuxButtonVisibility('ews-remove-duplicates-button', d && d[0] && d[0].duplicate_segs.length);
-});
-
-$(document).on('cube-leave-triggered.utilities', function () {
-  let settings = K.ls.get('settings');
-  let showInCube = false;
-
-  if (settings) {
-    settings = JSON.parse(settings);
-    showInCube = settings['dataset-borders-show-during-play'] === undefined ? true : settings['dataset-borders-show-during-play'];
-  }
-  
-  // we only have to take care, when in-cube is turned off
-  if (!showInCube) {
-    toggleDatasetBordersVisibility();
-  }
-});
-
-function toggleDatasetBordersVisibility() {
-  let settings = K.ls.get('settings');
-  let buttonState = K.ls.get('show-dataset-borders-state') === 'true';
-  let showBorders = false;
-  let showOrigin = false;
-  let showDuringPlay = false;
-  let gameMode = tomni.gameMode;
-
-  if (settings) {
-    settings = JSON.parse(settings);
-    showBorders = settings['show-dataset-borders-button'] === undefined ? true : settings['show-dataset-borders-button'];
-    showOrigin = settings['dataset-borders-show-origin'] === undefined ? true : settings['dataset-borders-show-origin'];
-    showDuringPlay = settings['dataset-borders-show-during-play'] === undefined ? true : settings['dataset-borders-show-during-play'];
-  }
-
-  // borders should be shown only if:
-  // the showButton option in Settings is true
-  // the state of the button is true
-  // we are not in gameMode or we are in gameMode and showDuringPlay option is true
-  if (showBorders && buttonState &&
-  (gameMode && showDuringPlay || !gameMode)) {
-    addDatasetBorders();
-    if (showOrigin) {
-      addDatasetOrigin();
-    }
-  }
-  else {
-    removeDatasetBorders();
-    removeDatasetOrigin();
-  }
-}
-
-function createDatasetBordersCube(coords, filled = false) {
-  let lengthX = coords.maxX - coords.minX;
-  let lengthY = coords.maxY - coords.minY;
-  let lengthZ = coords.maxZ - coords.minZ;
-
-  let halfX = lengthX / 2;
-  let halfY = lengthY / 2;
-  let halfZ = lengthZ / 2;
-  
-  let material, cube;
-
-  let box = new THREE.BoxGeometry(lengthX, lengthY, lengthZ);
-
-  if (!filled) {
-    let edges = new THREE.EdgesGeometry(box);
-    material = new THREE.LineBasicMaterial({color: 0xffffff, linewidth: 1});
-    cube = new THREE.LineSegments(edges, material);
-  }
-  else {
-    material = new THREE.MeshBasicMaterial({color: 0xff9200});
-    cube = new THREE.Mesh(box, material);
-  }
-
-
-  cube.position.set(coords.minX + halfX, coords.minY + halfY, coords.minZ + halfZ);
-  
-  return cube;
-};
-
-let datasetBordersE2198Cube = createDatasetBordersCube({
-  minX: 466,  minY: 498,   minZ: 434,
-  maxX: 4306, maxY: 20690, maxZ: 12786
-});
-
-let datasetBordersE2198OriginCube = createDatasetBordersCube({
-  minX: 466,       minY: 498,       minZ: 434,
-  maxX: 466 + 128, maxY: 498 + 128, maxZ: 434 + 128
-}, true);
-
-let datasetBordersZFishCube = createDatasetBordersCube({
-  minX: 68800,  minY: 59840,  minZ: 737640,
-  maxX: 423360, maxY: 230720, maxZ: 819000
-});
-
-let datasetBordersZFishOriginCube = createDatasetBordersCube({
-  minX: 68800,        minY: 59840,        minZ: 737640,
-  maxX: 68800 + 2560, maxY: 59840 + 2560, maxZ: 737640 + 2560
-}, true);
-
-function addDatasetBorders() {
-  let dataset = (tomni && tomni.cell) ? tomni.getCurrentCell().info.dataset_id : 1;
-  let world = tomni.threeD.getWorld();
-
-  if (dataset === 1) {
-    world.remove(datasetBordersZFishCube);
-    world.add(datasetBordersE2198Cube);
-  }
-  else if (dataset === 11) {
-    world.remove(datasetBordersE2198Cube);
-    world.add(datasetBordersZFishCube);
-  }
-
-  tomni.threeD.render();
-}
-
-function removeDatasetBorders() {
-  let world = tomni.threeD.getWorld();
-
-  world.remove(datasetBordersE2198Cube);
-  world.remove(datasetBordersZFishCube);
-
-  tomni.threeD.render();
-}
-
-function addDatasetOrigin() {
-  let dataset = (tomni && tomni.cell) ? tomni.getCurrentCell().info.dataset_id : 1;
-  let world = tomni.threeD.getWorld();
-
-  if (dataset === 1) {
-    world.remove(datasetBordersZFishOriginCube);
-    world.add(datasetBordersE2198OriginCube);
-  }
-  else if (dataset === 11) {
-    world.remove(datasetBordersE2198OriginCube);
-    world.add(datasetBordersZFishOriginCube);
-  }
-
-  tomni.threeD.render();
-}
-
-function removeDatasetOrigin() {
-  let world = tomni.threeD.getWorld();
-
-  world.remove(datasetBordersE2198OriginCube);
-  world.remove(datasetBordersZFishOriginCube);
-
-  tomni.threeD.render();
-}
-
-function setDatasetBorderButtonAndOptionsVisiblity(state) {
-  let buttonState = K.ls.get('show-dataset-borders-state') === null ? true : K.ls.get('show-dataset-borders-state') === 'true';
-  let settings = K.ls.get('settings');
-  let originVisibility = false;
-  
-  if (settings) {
-    settings = JSON.parse(settings);
-    originVisibility = settings['dataset-borders-show-origin'] === undefined ? true : settings['dataset-borders-show-origin'];
-  }
-
-  if (state) {
-    K.gid('dataset-borders-show-origin').parentNode.parentNode.style.display = 'flex';
-    K.gid('dataset-borders-show-during-play').parentNode.parentNode.style.display = 'flex';
-    if (tomni && tomni.cell && buttonState) {
-      addDatasetBorders();
-      if (originVisibility) {
-        addDatasetOrigin();
-      }
-    }
-  }
-  else {
-    K.gid('dataset-borders-show-origin').parentNode.parentNode.style.display = 'none';
-    K.gid('dataset-borders-show-during-play').parentNode.parentNode.style.display = 'none';
-    if (tomni && tomni.cell) {
-      removeDatasetBorders();
-      removeDatasetOrigin();
-    }
-  }
-  
-  let intv = setInterval(function () {
-    if (!K.gid('show-dataset-borders')) {
-      return;
-    }
-    clearInterval(intv);
-    
-    K.gid('show-dataset-borders').style.display = state ? 'inline-block' : 'none';
-  }, 100);
-}
-
-function setDatasetOriginVisibility(state) {
-  let buttonState = K.ls.get('show-dataset-borders-state') === null ? true : K.ls.get('show-dataset-borders-state') === 'true';
-  let settings = K.ls.get('settings');
-  let buttonVisibility = false;
-  
-  if (settings) {
-    settings = JSON.parse(settings);
-    buttonVisibility = settings['show-dataset-borders-button'] === undefined ? true : settings['show-dataset-borders-button'];
-  }
-
-  if (tomni && tomni.cell) {
-    if (state && buttonState && buttonVisibility) {
-      addDatasetOrigin();
-    }
-    else {
-      removeDatasetOrigin();
-    }
-  }
-}
-
-$(document).on('ews-setting-changed', function (evt, data) {
-  switch (data.setting) {
-    case 'ew-hide-blog':
-    case 'ew-hide-about':
-    case 'ew-hide-faq':
-    case 'ew-hide-forum':
-    case 'ew-hide-stats':
-    case 'ew-hide-wiki':
-      showOrHideButton(data.setting, data.state);
-      break;
-    case 'ews-compact-scouts-log':
-      compactOrExpandScoutsLog(data.state);
-      break;
-    case 'show-restore-seed-button':
-      setReapAuxButtonVisibility('ews-restore-seed-button', data.state);
-      break;
-    case 'show-remove-duplicate-segs-button':
-      setReapAuxButtonVisibility('ews-remove-duplicates-button', data.state);
-      break;
-    case 'show-dataset-borders-button':
-      setDatasetBorderButtonAndOptionsVisiblity(data.state);
-      break;
-    case 'dataset-borders-show-origin':
-      setDatasetOriginVisibility(data.state);
-      break;
-    case 'dataset-borders-show-during-play':
-      if (data.state) {
-        toggleDatasetBordersVisibility();
-      }
-      else {
-        removeDatasetBorders();
-        removeDatasetOrigin();
-      }
-  }
-});
-
-let intv2 = setInterval(function () {
-  if (!K.qS('.sl-cell-list')) {
-    return;
-  }
-  clearInterval(intv2);
-  let settings = K.ls.get('settings');
-  if (settings) {
-    settings = JSON.parse(settings);
-    $(document).trigger('ews-setting-changed', {setting: 'ews-compact-scouts-log', state: settings['ews-compact-scouts-log']});
-  }
-
-}, 100);
-// end: SETTINGS
-
-$('#editActions').append('<button class="reapAuxButton" id="ews-remove-duplicates-button" title="Remove Duplicate Segments">&nbsp;</button>');
-$('#editActions').append('<button class="reapAuxButton" id="ews-restore-seed-button" title="Regrow Seed">&nbsp;</button>');
-
-$('#ews-restore-seed-button')
-  .css({
-    'color': 'white',
-    'left': '50%',
-    'position': 'absolute',
-    'margin-top': 'auto',
-    'margin-left': '315px'
-  })
-  .click(function () {
-    tomni.f('select', {segids: tomni.task.seeds()});
-  });
-
-$('#ews-remove-duplicates-button')
-  .css({
-    'color': 'white',
-    'left': '50%',
-    'position': 'absolute',
-    'margin-top': 'auto',
-    'margin-left': '270px'
-  })
-  .click(function () {
-    let dupes = tomni.task.duplicates;
-    let dupeSegs = [];
-
-    if (dupes && dupes[0]) {
-      for (let i = 0; i < dupes.length; i++) {
-        dupeSegs = dupeSegs.concat(dupes[i].duplicate_segs);
-      }
-    }
-
-    if (dupeSegs) {
-      tomni.f('deselect', {segids: dupeSegs});
-    }
-  });
-
-let intv3 = setInterval(function () {
-  if (!K.gid('gameTools')) {
-    return;
-  }
-  
-  clearInterval(intv3);
-
-  $('#gameTools').prepend('<span id="show-dataset-borders" title="Show/hide dataset borders"></span>');
-  $('#show-dataset-borders').click(function () {
-    let state = K.ls.get('show-dataset-borders-state') === 'true';
-    K.ls.set('show-dataset-borders-state', !state);
-    toggleDatasetBordersVisibility();
-  });
-}, 100);
-
-
-
-if (LOCAL) {
-  K.addCSSFile('http://127.0.0.1:8887/styles.css');
-}
-else {
-  K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=1');
-}
-
-
-var settings = new EwsSettings();  
-
-
-$(document).on('websocket-task-completions', function (event, data) {
-  if (data.uid !== account.account.uid) {
-    return;
-  }
-
-  var
-    btn = $('.showmeme button');
-
-  if (!btn.hasClass('on1') && settings.get('ews-auto-refresh-showmeme')) {
-    if (btn.hasClass('on2')) {
-      btn.click().click().click();
-    }
-    else {
-      btn.click();
-
-      setTimeout(function () {
-        btn.click();
-        setTimeout(function () {
-          btn.click();
-        }, 500);
-      }, 500);
-    }
-
-  }
-});
-
-// submit using Spacebar
-$('body').keydown(function (evt) {
-  let btn;
-  let submit = settings.get('ews-submit-using-spacebar');
-  let turnOffZoom = settings.get('ews-turn-off-zoom-by-spacebar');
-
-  if (evt.keyCode === 32 && tomni.gameMode && (submit || turnOffZoom)) {
-    evt.stopPropagation();
-    
-    if (turnOffZoom && !submit) {
-      return;
-    }
-
-    if (!tomni.task.inspect) {
-      btn = K.gid('actionGo');
-    }
-    else {
-      if (account.roles.scythe || account.roles.mystic || account.roles.admin) {
-        btn = K.gid('saveGT');
-      }
-      else {
-        btn = K.gid('flagCube');
-      }
-    }
-
-    if (btn) {
-      btn.click();
-    }
-  }
-});
-
-// end: submit using Spacebar
-
-// tu
-if (account.roles.scout || account.roles.scythe || account.roles.mystic || account.roles.admin) {
-  $(document).keyup(function (evt) {
-    if (evt.which !== 71) {
-      return;
-    }
-
-    let settings = K.ls.get('settings');
-    if (settings) {
-      settings = JSON.parse(settings);
-      if (settings['go-in-and-out-of-cube-using-g']) {
-        if (tomni.gameMode) {
-          tomni.leave();
-        }
-        else {
-          tomni.play({inspect: tomni.getTarget()[0].id});
-        }
-      }
-    }
-  });
-}
-/*
-let ws = new WebSocket('wss://eyewire.org:2569/chat');
-ws.onmessage = function (evt) {
-  // console.log(evt);
-  let data = evt.data;
-
-  if (!data) {
-    return;
-  }
-  
-  data = JSON.parse(data);
-  
-  if (data.cmd === 'task-completions') {
-    // console.log('uid: ', data.params.uid, ', tasks: ', data.params.tasks, ' ,cellId: ', data.params.cell);
-    let taskId = Object.keys(data.params.tasks)[0];
-    taskId = parseInt(taskId, 10);
-    if (data.params.cell == tomni.cell) {console.log('here')
-      tomni.threeD.setTarget(taskId);
-      let target = tomni.threeD.getTarget();
-    
-      // tomni.task.id = taskId;
-      let bounds = target[0].bounds;
-      let spritey4 = makeTextSprite(data.params.uid);
-      spritey4.position.set(bounds.max.x, bounds.max.y, bounds.max.z);
-      tomni.threeD.getWorld().add(spritey4);
-    }
-  }
-  
-};
-
-
-// source: https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w  -r, y);
-  ctx.quadraticCurveTo(x + w - r, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h - r, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x + r, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y + r, x + r, y);
-  ctx.closePath();
-  ctx.fill();
-	ctx.stroke();
-}
-
-function arrayOfColorsToRGBa(arr) {
-  return 'rgba(' + arr.join(',') + ')';
-}
-
-// source: https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
-function makeTextSprite(message, parameters) {
-	let fontFace = 'Open Sans';
-	let fontSize = 96;
-	let borderWidth = 4;
-	let borderColor = [255, 100, 255, 1.0]; // r, g, b, a
-	let bgColor = [255, 100, 255, 0.8]; // ditto
-  let textColor = [255, 255, 255, 1.0] // ditto
-  let fontStyle = fontSize + 'px ' + fontFace;
-		
-	let canvas = document.createElement('canvas');
-	let context = canvas.getContext('2d');
-
-	context.font = fontStyle; // first we have to set font face and size for measurements...
-	// get size data (height depends only on font size)
-	let metrics = context.measureText(message);
-	let textWidth = metrics.width;
-
-  canvas.width = textWidth + borderWidth * 2;
-
-  context.font = fontStyle; // ... then we have to set it again after resizing canvas
-
-	context.fillStyle = arrayOfColorsToRGBa(bgColor);
-	context.strokeStyle = arrayOfColorsToRGBa(borderColor);
-
-	context.lineWidth = borderWidth;
-	roundRect(context, borderWidth / 2, borderWidth / 2, textWidth + borderWidth, fontSize * 1.4 + borderWidth, 6);
-	// 1.4 is extra height factor for text below baseline: g,j,p,q.
-
-	// text color
-	context.fillStyle = arrayOfColorsToRGBa(textColor);
-	context.fillText(message, borderWidth, fontSize + borderWidth);
-	
-	// canvas contents will be used for a texture
-	let texture = new THREE.CanvasTexture(canvas);
-
-	let spriteMaterial = new THREE.SpriteMaterial({map: texture});
-	let sprite = new THREE.Sprite(spriteMaterial);
-	sprite.scale.set(canvas.width, 100, 1);
-
-	return sprite;
-}
-
-let spritey1 = makeTextSprite('r3');
-spritey1.position.set(2186, 7026, 8978);
-tomni.threeD.getWorld().add(spritey1);
-// console.log(spritey1)
-
-let spritey2 = makeTextSprite('KrzysztofKruk');
-spritey2.position.set(2386, 7026, 8978);
-tomni.threeD.getWorld().add(spritey2);
-
-let spritey3 = makeTextSprite('amy');
-spritey3.position.set(2186, 7226, 8978);
-tomni.threeD.getWorld().add(spritey3);
-
-let spritey4 = makeTextSprite('randompersonjci');
-spritey4.position.set(2386, 7226, 8978);
-tomni.threeD.getWorld().add(spritey4);
-
-/*
-  websocket-task-completions:
-  
-  cell: cellId
-  uid: uid
-  tasks: {
-    cubeId: vote_weight
-  }
-  
-  websocket-cubeAdd
-  websocket-cubeDel
-*/
-
-} // end: main()
-
-/*
-let cameraProps, tomniRotation, threeDZoom;
-
-function save() {
-  let settings = K.ls.get('settings');
-  if (!settings) {
-    return;
-  }
-
-  settings = JSON.parse(settings);
-  if (!settings['dont-rotate-ov-while-in-cube']) {
-    return;
-  }
-
-  let camera = tomni.threeD.getCamera();
-
-  tomniRotation = {
-    x: tomni.center.rotation.x,
-    y: tomni.center.rotation.y,
-    z: tomni.center.rotation.z
-  };
-
-  threeDZoom = tomni.threeD.zoom;
-
-  cameraProps = {
-    position: {
-      x: camera.position.x,
-      y: camera.position.y,
-      z: camera.position.z
-    },
-    rotation: {
-      x: camera.rotation.x,
-      y: camera.rotation.y,
-      z: camera.rotation.z
-    },
-    up: {
-      x: camera.up.x,
-      y: camera.up.y,
-      z: camera.up.z
-    },
-    fov: camera.fov
-  };
-}
-
-function restore() {
-  let settings = K.ls.get('settings');
-  if (!settings) {
-    return;
-  }
-
-  settings = JSON.parse(settings);
-  if (!settings['dont-rotate-ov-while-in-cube']) {
-    return;
-  }
-
-  let camera = tomni.threeD.getCamera();
-
-  camera.fov = cameraProps.fov;
-  camera.position.set(cameraProps.position.x, cameraProps.position.y, cameraProps.position.z);
-  camera.rotation.set(cameraProps.rotation.x, cameraProps.rotation.y, cameraProps.rotation.z);
-  camera.up.set(cameraProps.up.x, cameraProps.up.y, cameraProps.up.z);
-  tomni.center.rotation.set(tomniRotation.x, tomniRotation.y, tomniRotation.z);
-  tomni.threeD.zoom = threeDZoom;
-  camera.updateProjectionMatrix();
-  tomni.forceRedraw();
-}
-
-
-$(document).on('cube-enter-triggered.utilities', save);
-$(document).on('cube-leave-triggered.utilities', restore);
-*/
-//// https://eyewire.org/?show_stashed=true
-
-})(); // end: wrapper
+})();

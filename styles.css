@@ -18,3 +18,12 @@
   background-image: url(remove_dupe-vf-21.svg);
   background-size: 90%;
 }
+
+#ews-additional-options-popup {
+  display: none;
+  position: absolute;
+  left: 100px;
+  top: 100px;
+  height: 300px;
+  width: 300px;
+}
