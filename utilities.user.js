@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.7.1.1
+// @version      1.7.1.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -297,7 +297,7 @@ if (LOCAL) {
   function toggleDatasetBordersVisibility() {
     let buttonState = K.ls.get('show-dataset-borders-state') === 'true';
     let showBorders = settings.getValue('show-dataset-borders-button');
-    let showOrigin = settings.getValue('dataset-border-show-origin');
+    let showOrigin = settings.getValue('dataset-borders-show-origin');
     let showDuringPlay = settings.getValue('dataset-borders-show-during-play');
     let gameMode = tomni.gameMode;
 
@@ -686,7 +686,7 @@ if (LOCAL) {
         if (data.state) {
           toggleDatasetBordersVisibility();
         }
-        else {
+        else if (tomni.gameMode) {
           removeDatasetBorders();
           removeDatasetOrigin();
         }
