@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.7.1
+// @version      1.7.1.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -462,7 +462,7 @@ if (LOCAL) {
     let buttonState = K.ls.get('show-dataset-borders-state') === null ? true : K.ls.get('show-dataset-borders-state') === 'true';
     let buttonVisibility = settings.getValue('show-dataset-borders-button');
 
-    if (tomni && tomni.cell) {
+    if (tomni) {
       if (state && buttonState && buttonVisibility) {
         addDatasetOrigin();
       }
@@ -544,6 +544,12 @@ if (LOCAL) {
     }
 
     if (account.can('scout scythe mystic admin') && !K.gid('scoutsLogButton')) {
+      return;
+    }
+    
+    // sometimes the main() function isn't run yet, so the settings object isn't initiated,
+    // and the SL aren't buttons aren't set correctly
+    if (typeof settings === 'undefined') {
       return;
     }
     
