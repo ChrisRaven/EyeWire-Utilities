@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.7.1.2
+// @version      1.8
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -573,7 +573,6 @@ if (LOCAL) {
 
 
 
-
   // autorefresh show-me-me
   $(document).on('websocket-task-completions', function (event, data) {
     if (data.uid !== account.account.uid) {
@@ -633,8 +632,189 @@ if (LOCAL) {
     }
   });
   // END: submit using Spacebar
+
+    
+  // source: https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
+  function rect(ctx, x, y, w, h) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  function arrayOfColorsToRGBa(arr) {
+    return 'rgba(' + arr.join(',') + ')';
+  }
+
+  // source: http://jsfiddle.net/User9673/J5d7h/
+  function makeTextSprite(text, params) {
+    let font = 'Arial';
+    let size = 96;
+    let textColor = [255, 255, 255, 1.0];
+
+    font = 'bold ' + size + 'px ' + font;
+
+    let canvas = document.createElement('canvas');
+    let context = canvas.getContext('2d');
+    context.font = font;
+
+    // get size data (height depends only on font size)
+    let metrics = context.measureText(text);
+    let textWidth = metrics.width;
+
+    canvas.width = textWidth;
+    canvas.height = size - 15;
+
+    context.font = font;
+    context.fillStyle = arrayOfColorsToRGBa(textColor);
+    context.fillText(text, 0, size - 20);
+
+    // canvas contents will be used for a texture
+    let texture = new THREE.Texture(canvas);
+    texture.needsUpdate = true;
+
+    let mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(canvas.width, canvas.height),
+        new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.DoubleSide,
+            transparent: true
+        })
+    );
+    mesh.scale.set(0.25, 0.25, 1);
+    mesh.name = text;
+
+    mesh.rotateY(Math.PI);
+    mesh.rotateZ(-Math.PI / 2);
+
+    return mesh;
+}
+
+  function addText(text, x, y, z) {
+    let sprite = makeTextSprite(text);
+    sprite.position.set(x, y, z);
+    return sprite;
+  }
+
   
   
+  function showNeighboursIDs() {
+    fetch('/1.0/cell/' + tomni.cell + '/tasks')
+      .then((response) => { return response.json(); })
+      .then((json) => {
+        let children = tomni.task.children;
+        let tasks = json.tasks;
+        let neighbours = tasks.filter((task) => { return children.indexOf(task.id) !== -1; });
+        let voxels = tomni.getCurrentCell().world.volumes.voxels;
+        let categorized = {lowX: [], lowY: [], lowZ: [], highX: [], highY: [], highZ: []};
+        let shift = 30;
+        let world = tomni.threeD.getWorld();
+        let group = new THREE.Group();
+        group.name = 'neighbours';
+
+        function categorize(child) {
+          let tb = tomni.task.bounds;
+          let cb = child.bounds;
+          if (tb.min.x > cb.min.x) {
+            group.add(addText(child.id, tb.min.x - voxels.x / 4 - categorized.lowX.length * shift, tb.min.y + voxels.y / 2, tb.min.z + voxels.z / 2));
+            categorized.lowX.push(child.id);
+          }
+          else if (tb.max.x < cb.max.x) {
+            group.add(addText(child.id, tb.max.x + voxels.x / 4 - categorized.highX.length * shift, tb.min.y + voxels.y / 2, tb.min.z + voxels.z / 2));
+            categorized.highX.push(child.id);
+          }
+          else if (tb.min.y > cb.min.y) {
+            group.add(addText(child.id, tb.min.x + voxels.x / 2 - categorized.lowY.length * shift, tb.min.y - voxels.y / 4, tb.min.z + voxels.z / 2));
+            categorized.lowY.push(child.id);
+          }
+          else if (tb.max.y < cb.max.y) {
+            group.add(addText(child.id, tb.min.x + voxels.x / 2 - categorized.highY.length * shift, tb.max.y + voxels.y / 4, tb.min.z + voxels.z / 2));
+            categorized.highY.push(child.id);
+          }
+          else if (tb.min.z > cb.min.z) {
+            group.add(addText(child.id, tb.min.x + voxels.x / 2 - categorized.lowZ.length * shift, tb.min.y + voxels.y / 2, tb.min.z - voxels.z / 4));
+            categorized.lowZ.push(child.id);
+          }
+          else if (tb.max.z < cb.max.z) {
+            group.add(addText(child.id, tb.min.x + voxels.x / 2 - categorized.highZ.length * shift, tb.min.y + voxels.y / 2, tb.max.z + voxels.z / 4));
+            categorized.highZ.push(child.id);
+          }
+        }
+
+        world.add(group);
+        neighbours.forEach(categorize);
+      });
+  }
+
+
+  var mouse = new THREE.Vector2();
+  var onClickPosition = new THREE.Vector2();
+  var raycaster = new THREE.Raycaster();
+  let camera = tomni.threeD.getCamera();
+
+  var getMousePosition = function (dom, x, y) {
+    var rect = dom.getBoundingClientRect();
+    return [(x - rect.left) / rect.width, (y - rect.top) / rect.height];
+  };
+
+  var getIntersects = function (point, objects) {
+    mouse.set((point.x * 2) - 1, - (point.y * 2) + 1);
+    raycaster.setFromCamera(mouse, camera);
+    return raycaster.intersectObjects(objects);
+  };
+
+  function hideNeighboursIDs() {
+    let world = tomni.threeD.getWorld();
+    let neighbours = world.getObjectByName('neighbours');
+    if (neighbours) {
+      world.remove(neighbours);
+    }
+  }
+
+  document.addEventListener('dblclick', function (event) {
+    let world = tomni.threeD.getWorld();
+    let container = document.getElementById('threeD');
+    let array = getMousePosition(container, event.clientX, event.clientY);
+    onClickPosition.fromArray(array);
+    let neighbours = world.getObjectByName('neighbours');
+    if (neighbours) {
+      let intersects = getIntersects(onClickPosition, neighbours.children);
+      if (intersects.length) {
+        tomni.taskManager.getTask({ 
+          task: intersects[0].object.name,
+          orientation: null,
+          inspect: true
+        });
+      }
+    }
+  }, false);
+
+  // "cube-enter-triggered", because when jumping between relatives, the "cube-leave-triggered" isn't triggered
+  $(document).on('cube-enter-triggered.utilities cube-leave-triggered.utilities', function () {
+    hideNeighboursIDs();
+  });
+
+
+  $('#showChildren').click(function () {
+    if (!settings.getValue('show-childrens-ids')) {
+      return;
+    }
+
+    // ideally, it should be negated, but in reality, it always has the older value at the moment of clicking
+    if (tomni.visRelatives.children) {
+      showNeighboursIDs();
+    }
+    else {
+      hideNeighboursIDs();
+    }
+  });
+
+
   function moveFreeToTheLeftOfHighlight(state) {
     if (state) {
       $('#cubeInspectorFloatingControls .controls').prepend($('.control.freeze'));
@@ -696,6 +876,14 @@ if (LOCAL) {
         break;
       case 'switch-sl-buttons':
         switchSLButtons(data.state);
+        break;
+      case 'show-childrens-ids':
+        if (tomni.getMode && tomni.visRelatives.children && data.state) {
+          showNeighboursIDs();
+        }
+        else {
+          hideNeighboursIDs();
+        }
         break;
     }
   });
@@ -798,6 +986,13 @@ if (LOCAL) {
       name: 'Don\'t rotate OV while in cube',
       id: 'dont-rotate-ov-while-in-cube'
     });
+    if (account.can('scout scythe mystic admin')) {
+      settings.addOption({
+        name: 'Show children\'s IDs',
+        id: 'show-childrens-ids'
+      });
+    }
+
     settings.getTarget().append('<div class="setting"><div class="minimalButton" id="ews-additional-options">Additional Options</div></div>');
     
     settings.addCategory('ews-utilities-top-buttons-settings-group', 'Top buttons');
@@ -893,7 +1088,6 @@ if (LOCAL) {
         }
       });
     }
-
 
   }
 
