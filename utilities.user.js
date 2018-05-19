@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.8.1
+// @version      1.8.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -633,19 +633,6 @@ if (LOCAL) {
   });
   // END: submit using Spacebar
 
-    
-  // source: https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
-  function rect(ctx, x, y, w, h) {
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w, y + h);
-    ctx.lineTo(x, y + h);
-    ctx.lineTo(x, y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  }
 
   function arrayOfColorsToRGBa(arr) {
     return 'rgba(' + arr.join(',') + ')';
@@ -686,7 +673,15 @@ if (LOCAL) {
             transparent: true
         })
     );
-    mesh.scale.set(0.25, 0.25, 1);
+    
+    let datasetId = tomni.getCurrentCell().info.dataset_id;
+    if (datasetId === 1) {
+      mesh.scale.set(0.25, 0.25, 1);
+    }
+    else if (datasetId === 11) {
+      mesh.scale.set(5, 5, 1);
+    }
+
     mesh.name = text;
 
     mesh.rotateY(Math.PI);
@@ -710,15 +705,18 @@ if (LOCAL) {
         let children = tomni.task.children;
         let tasks = json.tasks;
         let neighbours = tasks.filter((task) => { return children.indexOf(task.id) !== -1; });
-        let voxels = tomni.getCurrentCell().world.volumes.voxels;
+        let cell = tomni.getCurrentCell();
+        let voxels = cell.world.volumes.voxels;
         let categorized = {lowX: [], lowY: [], lowZ: [], highX: [], highY: [], highZ: []};
-        let shift = 30;
+        let shift;
         let world = tomni.threeD.getWorld();
         let group = new THREE.Group();
         group.name = 'neighbours';
+        let tb = tomni.task.bounds;
 
-        function categorize(child) {
-          let tb = tomni.task.bounds;
+        function categorizeEW(child) {
+          let shift = 30;
+
           let cb = child.bounds;
           if (tb.min.x > cb.min.x) {
             group.add(addText(child.id, tb.min.x - voxels.x / 4 - categorized.lowX.length * shift, tb.min.y + voxels.y / 2, tb.min.z + voxels.z / 2));
@@ -746,8 +744,45 @@ if (LOCAL) {
           }
         }
 
+        function categorizeZF(child) {
+          let shift = 500;
+
+          let cb = child.bounds;
+          if (tb.min.x > cb.min.x) {
+            group.add(addText(child.id, tb.min.x - voxels.x - categorized.lowX.length * shift, tb.min.y + voxels.y * 2.5, tb.min.z + voxels.z * 25));
+            categorized.lowX.push(child.id);
+          }
+          else if (tb.max.x < cb.max.x) {
+            group.add(addText(child.id, tb.max.x + voxels.x - categorized.highX.length * shift, tb.min.y + voxels.y * 2.5, tb.min.z + voxels.z * 25));
+            categorized.highX.push(child.id);
+          }
+          else if (tb.min.y > cb.min.y) {
+            group.add(addText(child.id, tb.min.x + voxels.x * 2.5 - categorized.lowY.length * shift, tb.min.y - voxels.y, tb.min.z + voxels.z * 25));
+            categorized.lowY.push(child.id);
+          }
+          else if (tb.max.y < cb.max.y) {
+            group.add(addText(child.id, tb.min.x + voxels.x * 2.5 - categorized.highY.length * shift, tb.max.y + voxels.y, tb.min.z + voxels.z * 25));
+            categorized.highY.push(child.id);
+          }
+          else if (tb.min.z > cb.min.z) {
+            group.add(addText(child.id, tb.min.x + voxels.x * 2.5 - categorized.lowZ.length * shift, tb.min.y + voxels.y * 2.5, tb.min.z - voxels.z));
+            categorized.lowZ.push(child.id);
+          }
+          else if (tb.max.z < cb.max.z) {
+            group.add(addText(child.id, tb.min.x + voxels.x * 2.5 - categorized.highZ.length * shift, tb.min.y + voxels.y * 2.5, tb.max.z + voxels.z));
+            categorized.highZ.push(child.id);
+          }
+        }
+
         world.add(group);
-        neighbours.forEach(categorize);
+
+        let datasetId = cell.info.dataset_id;
+        if (datasetId === 1) {
+          neighbours.forEach(categorizeEW);
+        }
+        else if (datasetId === 11) {
+          neighbours.forEach(categorizeZF);
+        }
       });
   }
 
