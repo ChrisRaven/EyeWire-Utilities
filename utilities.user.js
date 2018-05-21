@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.8.2
+// @version      1.8.3
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -1204,6 +1204,63 @@ if (LOCAL) {
     }
 
   }
+
+  let cameraProps, tomniRotation, threeDZoom;
+
+  function save() {
+    if (!settings.getValue('dont-rotate-ov-while-in-cube')) {
+      return;
+    }
+
+    let camera = tomni.threeD.getCamera();
+
+    tomniRotation = {
+      x: tomni.center.rotation.x,
+      y: tomni.center.rotation.y,
+      z: tomni.center.rotation.z
+    };
+
+    threeDZoom = tomni.threeD.zoom;
+
+    cameraProps = {
+      position: {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z
+      },
+      rotation: {
+        x: camera.rotation.x,
+        y: camera.rotation.y,
+        z: camera.rotation.z
+      },
+      up: {
+        x: camera.up.x,
+        y: camera.up.y,
+        z: camera.up.z
+      },
+      fov: camera.fov
+    };
+   }
+
+  function restore() {
+    if (!settings.getValue('dont-rotate-ov-while-in-cube')) {
+      return;
+    }
+
+    let camera = tomni.threeD.getCamera();
+ 
+    camera.fov = cameraProps.fov;
+    camera.position.set(cameraProps.position.x, cameraProps.position.y, cameraProps.position.z);
+    camera.rotation.set(cameraProps.rotation.x, cameraProps.rotation.y, cameraProps.rotation.z);
+    camera.up.set(cameraProps.up.x, cameraProps.up.y, cameraProps.up.z);
+    tomni.center.rotation.set(tomniRotation.x, tomniRotation.y, tomniRotation.z);
+    tomni.threeD.zoom = threeDZoom;
+    camera.updateProjectionMatrix();
+    tomni.forceRedraw();
+  }
+
+  $(document).on('cube-enter-triggered.utilities', save);
+  $(document).on('cube-leave-triggered.utilities', restore);
 
 
   let intv = setInterval(function () {
