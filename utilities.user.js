@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.8.3
+// @version      1.8.4
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -157,6 +157,30 @@ if (LOCAL) {
     }
   }
 
+  function moveToTopBar(text) {
+    let el = $("#links a:contains('" + text + "')").parent();
+    el.css('display', 'none');
+
+    let container = $('#nav ul');
+
+    if (!container.length) {
+      $('#homelogo').after('<ul id="ews-nav-bar-container"></ul>');
+      container = $('#nav ul');
+    }
+
+    if (el.length) {
+      container.append(el);
+    }
+  }
+
+  function moveToLinks(text) {
+    let el = $("#ews-nav-bar-container a:contains('" + text + "')").parent();
+
+    if (el.length) {
+      el.css('display', 'list-item');
+      $('#links li:last').before(el);
+    }
+  }
 
   // Top Buttons Hiding
   function showOrHideButton(pref, state) {
@@ -171,11 +195,12 @@ if (LOCAL) {
       default: return; // to not change anything, when some other setting was changed
     }
 
+    
     if (state) {
-      $("#nav ul a:contains('" + text + "')").parent().show();
+      moveToTopBar(text);
     }
     else {
-      $("#nav ul a:contains('" + text + "')").parent().hide();
+      moveToLinks(text);
     }
   }
   // END: Top Buttons Hiding
