@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.8.4
+// @version      1.8.5
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -107,7 +107,15 @@ if (LOCAL) {
 
       $.extend(settings, options);
       let storedState = K.ls.get(settings.id);
-      let state = storedState === null ? settings.defaultState : storedState.toLowerCase() === 'true';
+      let state;
+
+      if (storedState === null) {
+        K.ls.set(settings.id, settings.defaultState);
+        state = settings.defaultState;
+      }
+      else {
+        state = storedState.toLowerCase() === 'true';
+      }
 
       target.append(`
         <div class="setting" id="${settings.id}-wrapper">
@@ -571,13 +579,13 @@ if (LOCAL) {
     if (account.can('scout scythe mystic admin') && !K.gid('scoutsLogButton')) {
       return;
     }
-    
+
     // sometimes the main() function isn't run yet, so the settings object isn't initiated,
-    // and the SL aren't buttons aren't set correctly
+    // and the SL buttons aren't set correctly
     if (typeof settings === 'undefined') {
       return;
     }
-    
+
     clearInterval(intv3);
 
     $('#gameTools').prepend('<span id="show-dataset-borders" title="Show/hide dataset borders"></span>');
@@ -585,9 +593,9 @@ if (LOCAL) {
     if (state === undefined) {
       K.ls.set('show-dataset-borders-state', true);
     }
-    
+
     switchSLButtons(settings.getValue('switch-sl-buttons'));
-    
+
     $('#show-dataset-borders').click(function () {
       let state = K.ls.get('show-dataset-borders-state') === 'true';
       K.ls.set('show-dataset-borders-state', !state);
