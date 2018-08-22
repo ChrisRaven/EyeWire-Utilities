@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.8.5
+// @version      1.9
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -55,6 +55,14 @@ if (LOCAL) {
 
       tgt = document.getElementsByTagName('head')[0] || document.body || document.documentElement;
       tgt.appendChild(scriptNode);
+    },
+
+    injectCSS: function (rules) {
+      let script = document.createElement('style');
+      script.type = 'text/css';
+      script.innerHTML = rules;
+      let parent = document.body;
+      parent.insertBefore(script, parent.childNodes[parent.childNodes.length]);
     },
     
     // localStorage
@@ -1037,6 +1045,7 @@ if (LOCAL) {
 
 
   let settings;
+  let accordionApplied = false;
 
   function main() {
       
@@ -1066,7 +1075,7 @@ if (LOCAL) {
       K.addCSSFile('http://127.0.0.1:8887/styles.css');
     }
     else {
-      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=2');
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=3');
     }
     
     K.injectJS(`
@@ -1111,7 +1120,7 @@ if (LOCAL) {
     settings.addOption({
       name: 'Show Dataset Borders button',
       id: 'show-dataset-borders-button',
-      defaultState: true
+      defaultState: false
     });
       settings.addOption({
         name: 'Show origin',
@@ -1237,6 +1246,139 @@ if (LOCAL) {
     }
 
   }
+
+
+  $('#settingsButton').click(function () {
+    $('#settingsMenu')
+      .addClass('more')
+      .trigger('resize');
+
+    if (!accordionApplied) {
+      accordionApplied = true;
+
+      $('.settings-group, .sl-setting-group').each(function () {
+        $(this).children().first().unwrap();
+      });
+
+      K.qSa('#settingsMenu h1').forEach(function (el) {
+        let newElement = document.createElement('div');
+        el.parentNode.insertBefore(newElement, el.nextElementSibling);
+        let cursor = el.nextElementSibling.nextElementSibling;
+        while (cursor && cursor.tagName === 'DIV') {
+          newElement.appendChild(cursor);
+          cursor = el.nextElementSibling.nextElementSibling; // previous element from this position was moved, so the same path will guide to the next el
+        }
+      });
+
+      $('#settingsMenu').accordion({
+        header: 'h1',
+        heightStyle: 'content'
+      });
+
+      let trackerWindowSliderTitle = K.gid('activityTrackerWindowSlider').previousElementSibling;
+      trackerWindowSliderTitle.style.marginLeft = '30px';
+      trackerWindowSliderTitle.innerHTML = 'Visible cubes';
+
+      let parent = trackerWindowSliderTitle.parentNode;
+      parent.style.display = 'block';
+
+      let newTitle = document.createElement('div');
+      newTitle.innerHTML = 'Activity Tracker';
+      newTitle.style.fontWeight = '800';
+      newTitle.style.marginBottom = '15px';
+      trackerWindowSliderTitle.parentElement.insertBefore(newTitle, trackerWindowSliderTitle);
+      
+      let trackerJumpSettingTitle = K.gid('atOverviewJumpSetting');
+      trackerJumpSettingTitle.style.display = 'block';
+      trackerJumpSettingTitle.style.paddingRight = '0';
+      let span = trackerJumpSettingTitle.getElementsByTagName('span')[0];
+      span.style.marginLeft = '30px';
+      span.style.marginRight = '65px';
+      span.innerHTML = 'Jump to:';
+
+      let slider = K.qS('#atOverviewJumpSetting div.checkbox');
+      slider.style.display = 'inline-block';
+      slider.style.float = 'none';
+      slider.style.verticalAlign = 'bottom';
+      slider.style.marginLeft = '15px';
+      slider.style.marginRight = '15px';
+
+      let before = document.createElement('span');
+      before.style.fontSize = '9px';
+      before.innerHTML = 'In Cube';
+      slider.parentElement.insertBefore(before, slider);
+
+      let after = document.createElement('span');
+      after.style.fontSize = '9px';
+      after.style.marginRight = '15px';
+      after.innerHTML = 'Overview';
+      slider.parentElement.insertBefore(after, slider.nextSibling);
+
+      
+      let el = K.gid('chatVolumeSlider').parentElement;
+      parent = el.parentElement.parentElement;
+      parent.insertBefore(el, parent.firstChild);
+      parent.insertBefore(K.gid('sfxVolumeSlider').parentElement, parent.firstChild);
+      parent.insertBefore(K.gid('musicVolumeSlider').parentElement, parent.firstChild);
+
+      let sliderParent = K.gid('activityTrackerWindowSlider').parentElement.parentElement;
+
+      parent.insertBefore(K.gid('planeSlider').parentElement, sliderParent);
+
+      el = K.gid('em3d').parentElement.parentElement;
+      el.getElementsByTagName('span')[0].innerHTML = 'EM Images in 3D';
+      el.style.marginTop = '-5px';
+      parent.insertBefore(el, sliderParent);
+
+      $('#colorSlider').parent().unwrap();
+
+      K.gid('heatmaplegendspref').parentElement.parentElement.getElementsByTagName('span')[0].innerHTML = 'Heatmap Legend';
+      K.gid('downsampleAmount').parentElement.parentElement.getElementsByTagName('span')[0].innerHTML = '3D Smoothing (ZFish)';
+
+      let preloadCubes = K.gid('preloadCubes').parentElement.parentElement;
+      preloadCubes.style.display = 'block';
+
+      let preloadCubesTitle = preloadCubes.getElementsByTagName('span')[0];
+      preloadCubesTitle.style.display = 'inline-block';
+      preloadCubesTitle.style.marginLeft = '30px';
+      preloadCubesTitle.innerHTML = 'Preload cubes';
+
+      newTitle = document.createElement('div');
+      newTitle.innerHTML = 'Experimental Features';
+      newTitle.style.fontWeight = '800';
+      newTitle.style.marginBottom = '15px';
+      preloadCubesTitle.parentElement.insertBefore(newTitle, preloadCubesTitle);
+
+      let experimentalFeaturesTitle = K.gid('experimentalFeatures').parentElement.parentElement.getElementsByTagName('span')[0];
+      experimentalFeaturesTitle.style.display = 'inline-block';
+      experimentalFeaturesTitle.style.marginLeft = '30px';
+      experimentalFeaturesTitle.innerHTML = 'Enable 3D select (f key)';
+
+
+      let playerActivityIcons = K.gid('playerActivityIcons').parentElement.parentElement;
+      playerActivityIcons.style.display = 'block';
+
+      let playerActivityIconsTitle = playerActivityIcons.getElementsByTagName('span')[0];
+      playerActivityIconsTitle.style.display = 'inline-block';
+      playerActivityIconsTitle.style.marginLeft = '30px';
+
+      newTitle = document.createElement('div');
+      newTitle.innerHTML = 'Live Overview';
+      newTitle.style.fontWeight = '800';
+      newTitle.style.marginBottom = '15px';
+      playerActivityIconsTitle.parentElement.insertBefore(newTitle, playerActivityIconsTitle);
+
+      let playerAnonActivityIconsTitle = K.gid('playerAnonActivityIcons').parentElement.parentElement.getElementsByTagName('span')[0];
+      playerAnonActivityIconsTitle.style.display = 'inline-block';
+      playerAnonActivityIconsTitle.style.marginLeft = '30px';
+
+      let outlineGlowSliderTitle = K.gid('outlineGlowSlider').parentElement.getElementsByTagName('span')[0];
+      outlineGlowSliderTitle.style.display = 'inline-block';
+      outlineGlowSliderTitle.style.marginLeft = '30px';
+    }
+  });
+
+  
 
   let cameraProps, tomniRotation, threeDZoom;
 
