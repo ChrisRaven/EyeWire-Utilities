@@ -73,3 +73,60 @@
 .ui-accordion .ui-accordion-content {
   padding: 15px 0;
 }
+
+#ewSLbuttonsWrapper {
+  display: inline-block;
+  width: 60px;
+  line-height: 1;
+  margin-left: 0.5px; /* to fix a small gap between the second and the third column */
+  border-right-style: none;
+  border-right-color: #b5b730;
+  border-right-width: 2px;
+}
+
+#ewSLbuttonsWrapper div {
+  display: inline-block;
+  border: 1px solid;
+  font-size: 10px;
+  padding: 2px;
+  width: 10px;
+  height: 10px;
+  text-align: center;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+#ewSLbuttonsWrapper div:hover {
+  background-color: hsla(0,0%,100%,.11);
+}
+
+#ewSLnub {
+  color: greenyellow;
+  border-color: greenyellow;
+}
+
+#ewSLbranch {
+  color: orange;
+  border-color: orange;
+}
+
+#ewSLdust {
+  color: palegoldenrod;
+  border-color: palegoldenrod;
+}
+
+#ewSLmerger {
+  color: hotpink;
+  border-color: hotpink;
+}
+
+#ewSLAImerger {
+  color: fuchsia;
+  border-color: fuchsia;
+}
+
+#ewSLtestExtension {
+  color: cyan;
+  border-color: cyan;
+}

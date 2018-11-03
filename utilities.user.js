@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      1.10
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -577,6 +577,76 @@ if (LOCAL) {
 
   }, 100);
 
+  
+  let cubeStatus;
+
+  function createAdditionalSLButtons() {
+    let html = `
+      <div id="ewSLnub" title = "nub">N</div>
+      <div id="ewSLbranch" title="branch">B</div>
+      <div id="ewSLdust" title="dust">D</div>
+      <div id="ewSLmerger" title="merger">M</div>
+      <div id="ewSLAImerger" title="AI merger">A</div>
+      <div id="ewSLtestExtension" title="Watch / Test Extension">W</div>
+    `;
+
+    let div = document.createElement('div');
+    div.id = 'ewSLbuttonsWrapper';
+    div.innerHTML = html;
+
+    K.gid('scoutsLogFloatingControls').appendChild(div);
+
+    K.gid('ewSLbuttonsWrapper').style.display = settings.getValue('show-sl-shortcuts') ? 'inline-block' : 'none';
+
+    $('#ewSLbuttonsWrapper').on('click', 'div', function () {
+      let target = tomni.getTarget();
+
+      if (!target) {
+        return;
+      }
+
+      cubeStatus = {
+        cell: tomni.getCurrentCell().cellid,
+        task: target[0].id,
+        reaped: true,
+      };
+
+      switch(this.id)  {
+        case 'ewSLnub':
+          cubeStatus.status = 'good';
+          cubeStatus.issue = '';
+          cubeStatus.notes = 'nub added';
+          break;
+        case 'ewSLbranch':
+          cubeStatus.status = 'good';
+          cubeStatus.issue = '';
+          cubeStatus.notes = 'branch added';
+          break;
+        case 'ewSLdust':
+          cubeStatus.status = 'good';
+          cubeStatus.issue = '';
+          cubeStatus.notes = 'dust added';
+          break;
+        case 'ewSLmerger':
+          cubeStatus.status = 'good';
+          cubeStatus.issue = '';
+          cubeStatus.notes = 'merger removed';
+          break;
+        case 'ewSLAImerger':
+          cubeStatus.status = 'good';
+          cubeStatus.issue = 'ai-merger';
+          cubeStatus.notes = '';
+          break;
+        case 'ewSLtestExtension':
+          cubeStatus.status = 'watch';
+          cubeStatus.issue = 'test';
+          cubeStatus.notes = '';
+          break;
+      }
+
+      captureImage();
+    });
+  }
 
   // we have to wait for the bottom-right corner icons to be added to the page
   let intv3 = setInterval(function () {
@@ -609,6 +679,22 @@ if (LOCAL) {
       K.ls.set('show-dataset-borders-state', !state);
       toggleDatasetBordersVisibility();
     });
+  }, 50);
+
+  let intv4 = setInterval(function () {
+    if (!account.can('scythe mystic admin')) {
+      clearInterval(intv4);
+      return;
+    }
+
+    if (!K.gid('scoutsLogFloatingControls')) {
+      return;
+    }
+
+    clearInterval(intv4);
+
+    createAdditionalSLButtons();
+
   }, 50);
 
 
@@ -828,17 +914,17 @@ if (LOCAL) {
   }
 
 
-  var mouse = new THREE.Vector2();
-  var onClickPosition = new THREE.Vector2();
-  var raycaster = new THREE.Raycaster();
+  let mouse = new THREE.Vector2();
+  let onClickPosition = new THREE.Vector2();
+  let raycaster = new THREE.Raycaster();
   let camera = tomni.threeD.getCamera();
 
-  var getMousePosition = function (dom, x, y) {
-    var rect = dom.getBoundingClientRect();
+  let getMousePosition = function (dom, x, y) {
+    let rect = dom.getBoundingClientRect();
     return [(x - rect.left) / rect.width, (y - rect.top) / rect.height];
   };
 
-  var getIntersects = function (point, objects) {
+  let getIntersects = function (point, objects) {
     mouse.set((point.x * 2) - 1, - (point.y * 2) + 1);
     raycaster.setFromCamera(mouse, camera);
     return raycaster.intersectObjects(objects);
@@ -877,7 +963,7 @@ if (LOCAL) {
 
   // source: https://stackoverflow.com/a/30810322
   function copyTextToClipboard(text) {
-    var textArea = document.createElement("textarea");
+    let textArea = document.createElement("textarea");
   
     //
     // *** This styling is an extra step which is likely not required. ***
@@ -922,7 +1008,7 @@ if (LOCAL) {
     textArea.focus();
     textArea.select();
 
-    var successful = document.execCommand('copy');
+    let successful = document.execCommand('copy');
 
     document.body.removeChild(textArea);
   }
@@ -988,8 +1074,214 @@ if (LOCAL) {
       $('#settingsButton').before($('#inspectPanelButton'));
     }
   }
-  
 
+  function parseTransform(t) {
+    let e = t.match(/([0-9\.]+)/g),
+      a = {
+        x: e[4],
+        y: e[5]
+      },
+      s = 0,
+      n = {
+        x: 1,
+        y: 1
+      },
+      l = {
+        x: 0,
+        y: 0
+      },
+      i = e[0] * e[3] - e[1] * e[2];
+
+    if (e[0] || e[1]) {
+      let o = Math.sqrt(e[0] * e[0] + e[1] * e[1]);
+      s = e[1] > 0 ? Math.acos(e[0] / o) : -Math.acos(e[0] / o), n = {
+        x: o,
+        y: i / o
+      }, l.x = Math.atan((e[0] * e[2] + e[1] * e[3]) / (o * o))
+    }
+    else if (e[2] || e[3]) {
+      let r = Math.sqrt(e[2] * e[2] + e[3] * e[3]);
+      s = .5 * Math.pi - (e[3] > 0 ? Math.acos(-e[2] / r) : -Math.acos(e[2] / r)), n = {
+        x: i / r,
+        y: r
+      }, l.y = Math.atan((e[0] * e[2] + e[1] * e[3]) / (r * r))
+    }
+    else n = {
+      x: 0,
+      y: 0
+    }
+
+    return {
+      scale: n,
+      translate: a,
+      rotation: s,
+      skew: l
+    }
+  }
+
+  function fileRequest(url, data, file, callback) {
+    let form = new FormData;
+    if (data) {
+      for (let i in data) {
+        form.append(i, data[i]);
+      }
+    }
+        
+    if (file) {
+      for (let o in file) {
+        let binaryFile = new Blob([file[o].data], { type: file[o].type });
+        form.append(file[o].name, binaryFile, file[o].filename)
+      }
+    }
+
+    
+    K.gid('ewSLbuttonsWrapper').style.borderRightStyle = 'solid';
+    let request = new XMLHttpRequest;
+    request.open("POST", url, true);
+    request.withCredentials = true;
+    request.onreadystatechange = function() {
+      K.gid('ewSLbuttonsWrapper').style.borderRightStyle = 'none';
+
+      if (4 == this.readyState && 200 == this.status) {
+        let response = JSON.parse(this.responseText);
+        if (response.error) {
+          console.log('Scouts\' Log error');
+        }
+        else {
+          callback(response);
+        }
+      }
+      if (4 == this.readyState && 200 != this.status) {
+        console.log('Scouts\' Log error');
+      }
+    };
+    request.send(form);
+  }
+
+  function captureImage() {
+    let cellId = tomni.getCurrentCell().id;
+    let taskId = tomni.getTarget()[0].id;
+    let userName = account.account.username;
+
+    if ($('#threeDCanvas').length) {
+      tomni.threeD.render();
+    }
+
+    if ($('#twoD').length && tomni.gameMode) {
+      tomni.twoD.render();
+    }
+    
+    let threeDCanvas = $('#threeDCanvas')[0];
+    let scr = document.createElement('canvas');
+    scr.height = threeDCanvas.height;
+    scr.width = threeDCanvas.width;
+    let scrCtx = scr.getContext('2d');
+
+    scrCtx.imageSmoothingEnabled = false;
+    scrCtx.beginPath();
+    scrCtx.rect(0, 0, threeDCanvas.width, threeDCanvas.height);
+    scrCtx.fillStyle = '#232323';
+    scrCtx.fill();
+
+    let twoDCanvas = $('#twoD')[0];
+    if (twoDCanvas && tomni.gameMode) {
+    let twoDParent = $('#twoD').parent()[0],
+      minX = Math.floor((threeDCanvas.width - twoDParent.clientWidth) / 2),
+      maxX = Math.floor(threeDCanvas.width / 2);
+    scrCtx.drawImage(threeDCanvas, minX, 0, maxX, threeDCanvas.height, 0, 0, maxX, threeDCanvas.height);
+    let g = parseTransform($(twoDCanvas).css('transform')),
+      m = parseFloat($(twoDCanvas).css('left')),
+      p = -1 * parseFloat($(twoDCanvas).css('bottom')),
+      h = {
+        x: 0,
+        y: 0
+      },
+      threeDCanvasDims = {
+        x: maxX,
+        y: threeDCanvas.height
+      },
+      b = {
+        x: (maxX - twoDCanvas.width * g.scale.x) / 2 + m,
+        y: (threeDCanvas.height - twoDCanvas.height * g.scale.y) / 2 + p
+      },
+      twoDCanvasDims = {
+        x: b.x + twoDCanvas.width * g.scale.x,
+        y: b.y + twoDCanvas.height * g.scale.y
+      },
+      Q = {
+        x: Math.max(h.x, b.x),
+        y: Math.max(h.y, b.y)
+      },
+      v = {
+        x: Math.min(threeDCanvasDims.x, twoDCanvasDims.x),
+        y: Math.min(threeDCanvasDims.y, twoDCanvasDims.y)
+      },
+      S = {
+        x: b.x < Q.x ? Math.abs(Q.x - b.x) / g.scale.x < 0 ? 0 : Math.abs(Q.x - b.x) / g.scale.x > twoDCanvas.width ? twoDCanvas.width - 1 : Math.abs(Q.x - b.x) / g.scale.x : 0,
+        y: b.y < Q.y ? Math.abs(Q.y - b.y) / g.scale.y < 0 ? 0 : Math.abs(Q.y - b.y) / g.scale.y > twoDCanvas.height ? twoDCanvas.height - 1 : Math.abs(Q.y - b.y) / g.scale.y : 0,
+        w: Math.abs((v.x - Q.x) / g.scale.x),
+        h: Math.abs((v.y - Q.y) / g.scale.y)
+      };
+    scrCtx.drawImage(twoDCanvas, S.x, S.y, S.w, S.h, maxX + Q.x, Q.y, v.x - Q.x, v.y - Q.y);
+    scrCtx.beginPath();
+    scrCtx.setLineDash([3, 3]);
+    scrCtx.moveTo(maxX + .5, 0);
+    scrCtx.lineTo(maxX + .5, threeDCanvas.height);
+    scrCtx.lineWidth = 1;
+    scrCtx.strokeStyle = '#888';
+    scrCtx.stroke();
+    scrCtx.beginPath();
+    scrCtx.rect(5, 5, 300, 88);
+    scrCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    scrCtx.fill();
+
+    let w = tomni.twoD.axis;
+    scrCtx.font = 'normal 10pt sans-serif';
+    scrCtx.fillStyle = '#bbb';
+    scrCtx.fillText('Cell: ' + cellId, 10, 23);
+    scrCtx.fillText('Cube: ' + taskId, 10, 43);
+    scrCtx.fillText('Plane: ' + w, 10, 63);
+    scrCtx.fillText('User: ' + userName, 10, 83);
+  }
+  else {
+    scrCtx.drawImage(threeDCanvas, 0, 0);
+    scrCtx.beginPath();
+    scrCtx.rect(5, 5, 300, 48);
+    scrCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    scrCtx.fill();
+    scrCtx.font = 'normal 10pt sans-serif';
+    scrCtx.fillStyle = '#bbb';
+    scrCtx.fillText('Cell: ' + cellId, 10, 23);
+    scrCtx.fillText('User: ' + userName, 10, 43);
+  }
+
+  let k = "https://scoutslog.org/1.1/";
+  let s = scr.toDataURL('image/png');
+  let n = atob(s.split(",")[1]);
+
+  
+  let l = s.split(",")[0].split(":")[1].split(";")[0];
+  let i = new ArrayBuffer(n.length);
+  let o = new Uint8Array(i);
+
+  for (let r = 0; r < n.length; r++) {
+    o[r] = n.charCodeAt(r);
+  }
+  fileRequest(k + "task/" + encodeURIComponent(taskId) + "/action/create/upload", {
+    data: JSON.stringify(cubeStatus)
+  }, [{
+    name: "image",
+    filename: "capture.png",
+    type: l,
+    data: i
+  }], function () {
+    console.log('success');
+  })
+
+};
+
+// https://scoutslog.org/1.1/task/3271748/action/create/upload
+// <input type="hidden" id="sl-action-image" name="image-data" value="" />
 
 
   $(document).on('ews-setting-changed', function (evt, data) {
@@ -1040,6 +1332,11 @@ if (LOCAL) {
           hideNeighboursIDs();
         }
         break;
+      case 'show-sl-shortcuts':
+        if (K.gid('ewSLbuttonsWrapper')) {
+          K.gid('ewSLbuttonsWrapper').style.display = data.state ? 'inline-block' : 'none';
+        }
+        break;
     }
   });
 
@@ -1075,7 +1372,7 @@ if (LOCAL) {
       K.addCSSFile('http://127.0.0.1:8887/styles.css');
     }
     else {
-      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=3');
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=4');
     }
     
     K.injectJS(`
@@ -1114,7 +1411,12 @@ if (LOCAL) {
       settings.addOption({
         name: 'Show Remove Dupes button',
         id: 'show-remove-duplicate-segs-button'
-      })
+      });
+      settings.addOption({
+        name: 'Scouts\' Log shortcuts',
+        id: 'show-sl-shortcuts',
+        defaultState: true
+      });
     }
     
     settings.addOption({
