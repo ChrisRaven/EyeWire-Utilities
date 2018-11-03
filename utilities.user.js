@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.10
+// @version      1.10.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -683,7 +683,6 @@ if (LOCAL) {
 
   let intv4 = setInterval(function () {
     if (!account.can('scythe mystic admin')) {
-      clearInterval(intv4);
       return;
     }
 
