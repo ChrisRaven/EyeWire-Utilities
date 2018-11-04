@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.10.1
+// @version      1.10.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -584,10 +584,12 @@ if (LOCAL) {
     let html = `
       <div id="ewSLnub" title = "nub">N</div>
       <div id="ewSLbranch" title="branch">B</div>
-      <div id="ewSLdust" title="dust">D</div>
+      <div id="ewSLdust" title="dust">d</div>
+      <div id="ewSLduplicate" tutle="duplicate">D</div>
       <div id="ewSLmerger" title="merger">M</div>
       <div id="ewSLAImerger" title="AI merger">A</div>
       <div id="ewSLtestExtension" title="Watch / Test Extension">W</div>
+      <div id="ewSLwrongSeedMerger" title="Wrong Seed Merger">S</div>
     `;
 
     let div = document.createElement('div');
@@ -627,6 +629,11 @@ if (LOCAL) {
           cubeStatus.issue = '';
           cubeStatus.notes = 'dust added';
           break;
+        case 'ewSLduplicate':
+          cubeStatus.status = 'good';
+          cubeStatus.issue = 'duplicate';
+          cubeStatus.notes = '';
+          break;
         case 'ewSLmerger':
           cubeStatus.status = 'good';
           cubeStatus.issue = '';
@@ -642,6 +649,10 @@ if (LOCAL) {
           cubeStatus.issue = 'test';
           cubeStatus.notes = '';
           break;
+        case 'ewSLwrongSeedMerger':
+          cubeStatus.status = 'good';
+          cubeStatus.issue = 'wrong-seed';
+          cubeStatus.notes = '';
       }
 
       captureImage();
