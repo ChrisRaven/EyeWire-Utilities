@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.10.2
+// @version      1.10.2.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -585,7 +585,7 @@ if (LOCAL) {
       <div id="ewSLnub" title = "nub">N</div>
       <div id="ewSLbranch" title="branch">B</div>
       <div id="ewSLdust" title="dust">d</div>
-      <div id="ewSLduplicate" tutle="duplicate">D</div>
+      <div id="ewSLduplicate" title="duplicate">D</div>
       <div id="ewSLmerger" title="merger">M</div>
       <div id="ewSLAImerger" title="AI merger">A</div>
       <div id="ewSLtestExtension" title="Watch / Test Extension">W</div>
