@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.10.2.1
+// @version      1.10.2.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -1265,7 +1265,7 @@ if (LOCAL) {
     scrCtx.fillText('User: ' + userName, 10, 43);
   }
 
-  let k = "https://scoutslog.org/1.1/";
+  let k = scoutsLog && scoutsLog.slScoutsLogAPIbase ? scoutsLog.slScoutsLogAPIbase : "https://scoutslog.org/1.1/";
   let s = scr.toDataURL('image/png');
   let n = atob(s.split(",")[1]);
 
