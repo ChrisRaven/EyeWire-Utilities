@@ -102,41 +102,33 @@
 }
 
 #ewSLnub {
-  color: greenyellow;
-  border-color: greenyellow;
+  color: #e6c760;
 }
 
 #ewSLbranch {
-  color: orange;
-  border-color: orange;
+  color: #e6c760;
 }
 
 #ewSLdust {
-  color: palegoldenrod;
-  border-color: palegoldenrod;
-}
-
-#ewSLduplicate {
-  color: orangered;
-  border-color: orangered;
-}
-
-#ewSLmerger {
-  color: hotpink;
-  border-color: hotpink;
-}
-
-#ewSLAImerger {
-  color: fuchsia;
-  border-color: fuchsia;
+  color: #e6c760;
 }
 
 #ewSLtestExtension {
-  color: cyan;
-  border-color: cyan;
+  color: #42d5ec;
+}
+
+#ewSLduplicate {
+  color: #d04f4f;
+}
+
+#ewSLmerger {
+  color: #d04f4f;
+}
+
+#ewSLAImerger {
+  color: #4f74c4;
 }
 
 #ewSLwrongSeedMerger {
-  color: deepskyblue;
-  border-color:  deepskyblue;
+  color: #4f74c4;
 }

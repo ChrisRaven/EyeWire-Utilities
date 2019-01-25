@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.10.2.2
+// @version      1.11
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 /*jshint esversion: 6 */
-/*globals $, account, tomni, THREE */ 
+/*globals $, account, tomni, THREE, scoutsLog */ 
 
 let LOCAL = false;
 if (LOCAL) {
@@ -111,7 +111,7 @@ if (LOCAL) {
         id: '',
         defaultState: false,
         indented: false
-      }
+      };
 
       $.extend(settings, options);
       let storedState = K.ls.get(settings.id);
@@ -170,7 +170,7 @@ if (LOCAL) {
       }
 
       return val;
-    }
+    };
   }
 
   function moveToTopBar(text) {
@@ -386,7 +386,7 @@ if (LOCAL) {
     cube.position.set(coords.minX + halfX, coords.minY + halfY, coords.minZ + halfZ);
     
     return cube;
-  };
+  }
 
   let datasetBordersE2198Cube = createDatasetBordersCube({
     minX: 466,  minY: 498,   minZ: 434,
@@ -577,6 +577,27 @@ if (LOCAL) {
 
   }, 100);
 
+
+  function submitTask() {
+    // simulate clicking on the Reap button
+    K.qS('#editActions .reaperButton').style.backgroundColor = '#6785c5';
+
+    tomni.taskManager.saveTask({
+      status: 'finished', 
+      reap: true,
+      show_leaderboard: account.can('omni') === false,
+      always: function () { // TaskUI.toggleLoader from omni.js
+        $('#normal-cube-loader').removeClass('onscreen');
+        // bring back the Reap button to the normal state
+        K.qS('#editActions .reaperButton').style.backgroundColor = '#4f74c4';
+      },
+      fail: function () { // taskActionButtonsSetDisabled in TaskUI from omni.js
+        $('#realActions button').prop('disabled', false);
+        $('#editActions button').prop('disabled', false);
+        $('#reviewActions button').prop('disabled', false);
+      }
+    });
+  }
   
   let cubeStatus;
 
@@ -585,10 +606,10 @@ if (LOCAL) {
       <div id="ewSLnub" title = "nub">N</div>
       <div id="ewSLbranch" title="branch">B</div>
       <div id="ewSLdust" title="dust">d</div>
+      <div id="ewSLtestExtension" title="Watch / Test Extension">W</div>
       <div id="ewSLduplicate" title="duplicate">D</div>
       <div id="ewSLmerger" title="merger">M</div>
       <div id="ewSLAImerger" title="AI merger">A</div>
-      <div id="ewSLtestExtension" title="Watch / Test Extension">W</div>
       <div id="ewSLwrongSeedMerger" title="Wrong Seed Merger">S</div>
     `;
 
@@ -656,6 +677,9 @@ if (LOCAL) {
       }
 
       captureImage();
+      if (tomni.gameMode) {
+        submitTask();
+      }
     });
   }
 
@@ -845,7 +869,6 @@ if (LOCAL) {
         let cell = tomni.getCurrentCell();
         let voxels = cell.world.volumes.voxels;
         let categorized = {lowX: [], lowY: [], lowZ: [], highX: [], highY: [], highZ: []};
-        let shift;
         let world = tomni.threeD.getWorld();
         let group = new THREE.Group();
         group.name = 'neighbours';
@@ -1018,7 +1041,7 @@ if (LOCAL) {
     textArea.focus();
     textArea.select();
 
-    let successful = document.execCommand('copy');
+    document.execCommand('copy');
 
     document.body.removeChild(textArea);
   }
@@ -1104,21 +1127,27 @@ if (LOCAL) {
 
     if (e[0] || e[1]) {
       let o = Math.sqrt(e[0] * e[0] + e[1] * e[1]);
-      s = e[1] > 0 ? Math.acos(e[0] / o) : -Math.acos(e[0] / o), n = {
+      s = e[1] > 0 ? Math.acos(e[0] / o) : -Math.acos(e[0] / o);
+      n = {
         x: o,
         y: i / o
-      }, l.x = Math.atan((e[0] * e[2] + e[1] * e[3]) / (o * o))
+      };
+       l.x = Math.atan((e[0] * e[2] + e[1] * e[3]) / (o * o));
     }
     else if (e[2] || e[3]) {
       let r = Math.sqrt(e[2] * e[2] + e[3] * e[3]);
-      s = .5 * Math.pi - (e[3] > 0 ? Math.acos(-e[2] / r) : -Math.acos(e[2] / r)), n = {
+      s = 0.5 * Math.pi - (e[3] > 0 ? Math.acos(-e[2] / r) : -Math.acos(e[2] / r));
+      n = {
         x: i / r,
         y: r
-      }, l.y = Math.atan((e[0] * e[2] + e[1] * e[3]) / (r * r))
+      };
+      l.y = Math.atan((e[0] * e[2] + e[1] * e[3]) / (r * r));
     }
-    else n = {
-      x: 0,
-      y: 0
+    else {
+      n = {
+        x: 0,
+        y: 0
+      };
     }
 
     return {
@@ -1126,27 +1155,31 @@ if (LOCAL) {
       translate: a,
       rotation: s,
       skew: l
-    }
+    };
   }
 
   function fileRequest(url, data, file, callback) {
-    let form = new FormData;
+    let form = new FormData();
     if (data) {
       for (let i in data) {
-        form.append(i, data[i]);
+        if (data.hasOwnProperty(i)) {
+          form.append(i, data[i]);
+        }
       }
     }
         
     if (file) {
       for (let o in file) {
-        let binaryFile = new Blob([file[o].data], { type: file[o].type });
-        form.append(file[o].name, binaryFile, file[o].filename)
+        if (file.hasOwnProperty(o)) {
+          let binaryFile = new Blob([file[o].data], { type: file[o].type });
+          form.append(file[o].name, binaryFile, file[o].filename);
+        }
       }
     }
 
     
     K.gid('ewSLbuttonsWrapper').style.borderRightStyle = 'solid';
-    let request = new XMLHttpRequest;
+    let request = new XMLHttpRequest();
     request.open("POST", url, true);
     request.withCredentials = true;
     request.onreadystatechange = function() {
@@ -1235,8 +1268,8 @@ if (LOCAL) {
     scrCtx.drawImage(twoDCanvas, S.x, S.y, S.w, S.h, maxX + Q.x, Q.y, v.x - Q.x, v.y - Q.y);
     scrCtx.beginPath();
     scrCtx.setLineDash([3, 3]);
-    scrCtx.moveTo(maxX + .5, 0);
-    scrCtx.lineTo(maxX + .5, threeDCanvas.height);
+    scrCtx.moveTo(maxX + 0.5, 0);
+    scrCtx.lineTo(maxX + 0.5, threeDCanvas.height);
     scrCtx.lineWidth = 1;
     scrCtx.strokeStyle = '#888';
     scrCtx.stroke();
@@ -1286,9 +1319,9 @@ if (LOCAL) {
     data: i
   }], function () {
     console.log('success');
-  })
+  });
 
-};
+}
 
 // https://scoutslog.org/1.1/task/3271748/action/create/upload
 // <input type="hidden" id="sl-action-image" name="image-data" value="" />
