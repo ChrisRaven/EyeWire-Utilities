@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.11
+// @version      1.11.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -677,7 +677,7 @@ if (LOCAL) {
       }
 
       captureImage();
-      if (tomni.gameMode) {
+      if (tomni.gameMode && settings.getValue('log-and-reap')) {
         submitTask();
       }
     });
@@ -1318,13 +1318,36 @@ if (LOCAL) {
     type: l,
     data: i
   }], function () {
-    console.log('success');
+    return;
   });
 
 }
 
-// https://scoutslog.org/1.1/task/3271748/action/create/upload
-// <input type="hidden" id="sl-action-image" name="image-data" value="" />
+// source: https://stackoverflow.com/a/30893294
+function switchReapMode(logAndReap) {
+  let reapButton = K.gid('saveGT');
+
+  if (logAndReap) {
+    reapButton.removeEventListener('click', submitTask); // turn off submitting without the new popup
+
+    if (reapButton.clickFunctions) {
+      for (let i = 0; i < reapButton.clickFunctions.length; i++) {
+          $(reapButton).click(reapButton.clickFunctions[i]);
+      }
+      reapButton.clickFunctions = null;
+  }
+  }
+  else {
+    reapButton.clickFunctions = [];
+    let click = $._data(reapButton, 'events').click;
+    for(let i = 0; i < click.length; i++) {
+        reapButton.clickFunctions.push(click[i].handler);
+    }
+    $(reapButton).off('click');
+
+    reapButton.addEventListener('click', submitTask); // submit without the new popup
+  }
+}
 
 
   $(document).on('ews-setting-changed', function (evt, data) {
@@ -1380,6 +1403,9 @@ if (LOCAL) {
           K.gid('ewSLbuttonsWrapper').style.display = data.state ? 'inline-block' : 'none';
         }
         break;
+      case 'log-and-reap': {
+        switchReapMode(data.state);
+      }
     }
   });
 
@@ -1458,6 +1484,11 @@ if (LOCAL) {
       settings.addOption({
         name: 'Scouts\' Log shortcuts',
         id: 'show-sl-shortcuts',
+        defaultState: true
+      });
+      settings.addOption({
+        name: 'Log and Reap',
+        id: 'log-and-reap',
         defaultState: true
       });
     }
