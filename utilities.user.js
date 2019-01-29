@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.11.1.1
+// @version      1.11.1.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -283,6 +283,7 @@ if (LOCAL) {
       changeHtml('#sl-task-details', 'Cube Details ');
       changeHtml('#sl-task-entry', 'New Entry');
       K.qS('#scoutsLogFloatingControls img').style.display = '';
+      K.gid('sl-task-entry').style.width = '70px';
     }
   }
   // END: Compact Scouts' Log
