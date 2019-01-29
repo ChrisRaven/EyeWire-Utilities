@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.11.1.2
+// @version      1.11.1.3
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -604,14 +604,14 @@ if (LOCAL) {
 
   function createAdditionalSLButtons() {
     let html = `
-      <div id="ewSLnub" title = "nub">N</div>
-      <div id="ewSLbranch" title="branch">B</div>
-      <div id="ewSLdust" title="dust">d</div>
-      <div id="ewSLtestExtension" title="Watch / Test Extension">W</div>
-      <div id="ewSLduplicate" title="duplicate">D</div>
+      <div id="ewSLnub" title = "Nub">N</div>
+      <div id="ewSLbranch" title="Branch">B</div>
+      <div id="ewSLdust" title="Dust">d</div>
+      <div id="ewSLtestExtension" title="Test Extension">W</div>
+      <div id="ewSLduplicate" title="Duplicate">D</div>
       <div id="ewSLmerger" title="merger">M</div>
-      <div id="ewSLAImerger" title="AI merger">A</div>
-      <div id="ewSLwrongSeedMerger" title="Wrong Seed Merger">S</div>
+      <div id="ewSLAImerger" title="Seed Merger">A</div>
+      <div id="ewSLwrongSeedMerger" title="Wrong Seed">S</div>
     `;
 
     let div = document.createElement('div');
@@ -638,43 +638,35 @@ if (LOCAL) {
       switch(this.id)  {
         case 'ewSLnub':
           cubeStatus.status = 'good';
-          cubeStatus.issue = '';
-          cubeStatus.notes = 'nub added';
+          cubeStatus.issue = 'nub';
           break;
         case 'ewSLbranch':
           cubeStatus.status = 'good';
-          cubeStatus.issue = '';
-          cubeStatus.notes = 'branch added';
+          cubeStatus.issue = 'branch';
           break;
         case 'ewSLdust':
           cubeStatus.status = 'good';
-          cubeStatus.issue = '';
-          cubeStatus.notes = 'dust added';
+          cubeStatus.issue = 'dust';
           break;
         case 'ewSLduplicate':
           cubeStatus.status = 'good';
           cubeStatus.issue = 'duplicate';
-          cubeStatus.notes = '';
           break;
         case 'ewSLmerger':
           cubeStatus.status = 'good';
           cubeStatus.issue = '';
-          cubeStatus.notes = 'merger removed';
           break;
         case 'ewSLAImerger':
           cubeStatus.status = 'good';
-          cubeStatus.issue = 'ai-merger';
-          cubeStatus.notes = '';
+          cubeStatus.issue = 'seed-merger';
           break;
         case 'ewSLtestExtension':
           cubeStatus.status = 'watch';
-          cubeStatus.issue = 'test';
-          cubeStatus.notes = '';
+          cubeStatus.issue = 'test-extension';
           break;
         case 'ewSLwrongSeedMerger':
           cubeStatus.status = 'good';
           cubeStatus.issue = 'wrong-seed';
-          cubeStatus.notes = '';
       }
 
       captureImage();
