@@ -1170,25 +1170,27 @@ if (LOCAL) {
       }
     }
 
-    
-    K.gid('ewSLbuttonsWrapper').style.borderRightStyle = 'solid';
     let request = new XMLHttpRequest();
     request.open("POST", url, true);
     request.withCredentials = true;
     request.onreadystatechange = function() {
-      K.gid('ewSLbuttonsWrapper').style.borderRightStyle = 'none';
-
       if (4 == this.readyState && 200 == this.status) {
         let response = JSON.parse(this.responseText);
         if (response.error) {
-          console.log('Scouts\' Log error');
+          tomni.notificationManager.addChip({title: 'Error during creating the log entry'});
         }
         else {
-          callback(response);
+          tomni.notificationManager.addChip({title: 'Log entry created', icon: 'data:image/svg+xml;base64,' + btoa(
+            `<svg xmlns="http://www.w3.org/2000/svg" width="984.60162" height="974.57257">
+              <path fill="#FFF" d="m 200,591.89259 c 0,0 115.2,129.7 138.2,182.68 h 99 c 41.5,-126.7 202.7,-429.1 340.92,-535.1 28.6,-36.8 -43.3,-52 -101.35,-27.62 -87.5,36.7 -252.5,317.2 -283.3,384.64 -43.7,11.5 -89.8,-73.7 -89.84,-73.7 z"/>
+            </svg>`
+          )});
         }
+
+        callback(response);
       }
       if (4 == this.readyState && 200 != this.status) {
-        console.log('Scouts\' Log error');
+        tomni.notificationManager.addChip({title:'Error during creating the log entry'});
       }
     };
     request.send(form);
