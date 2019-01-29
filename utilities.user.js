@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.11.1
+// @version      1.11.1.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -1441,7 +1441,7 @@ function switchReapMode(logAndReap) {
       K.addCSSFile('http://127.0.0.1:8887/styles.css');
     }
     else {
-      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=4');
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=5');
     }
     
     K.injectJS(`
