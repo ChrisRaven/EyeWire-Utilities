@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.11.1.5
+// @version      1.11.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -63,6 +63,17 @@ if (LOCAL) {
       script.innerHTML = rules;
       let parent = document.body;
       parent.insertBefore(script, parent.childNodes[parent.childNodes.length]);
+    },
+
+    // source: https://stackoverflow.com/a/1349426
+    randomString: function () {
+      let text = '';
+      let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    
+      for (let i = 0; i < 5; i++)
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    
+      return text;
     },
     
     // localStorage
@@ -1151,6 +1162,18 @@ if (LOCAL) {
     };
   }
 
+  // source: omni.js
+  function fadeOut(el) {
+    var onTransitionComplete = function onTransitionComplete() {
+      el.removeEventListener('transitionend', onTransitionComplete);
+      el.parentNode.removeChild(el);
+    };
+
+    el.addEventListener('transitionend', onTransitionComplete);
+
+    el.style.opacity = 0;
+  }
+
   function fileRequest(url, data, file, callback) {
     let form = new FormData();
     if (data) {
@@ -1180,11 +1203,37 @@ if (LOCAL) {
           tomni.notificationManager.addChip({title: 'Error during creating the log entry'});
         }
         else {
-          tomni.notificationManager.addChip({title: 'Log entry created', icon: 'data:image/svg+xml;base64,' + btoa(
-            `<svg xmlns="http://www.w3.org/2000/svg" width="984.60162" height="974.57257">
-              <path fill="#FFF" d="m 200,591.89259 c 0,0 115.2,129.7 138.2,182.68 h 99 c 41.5,-126.7 202.7,-429.1 340.92,-535.1 28.6,-36.8 -43.3,-52 -101.35,-27.62 -87.5,36.7 -252.5,317.2 -283.3,384.64 -43.7,11.5 -89.8,-73.7 -89.84,-73.7 z"/>
+          let randomID = K.randomString();
+          let logAndReap = settings.getValue('log-and-reap');
+
+          if (logAndReap && tomni.gameMode) {
+            tomni.notificationManager.addChip({
+              title: 'Logged and Reaped<div id="' + randomID + '"></div>',
+              icon: 'data:image/svg+xml;base64,' + btoa(
+              `<svg xmlns="http://www.w3.org/2000/svg" height="147.37482" width="133.25226">
+                <g transform="translate(29.895606,29.7)">
+                  <path class="cls-1" d="m 12.46,30.3 q 7,25.42 15.67,50.07 v 0.06 a 6.61,6.61 0 0 0 0.59,1.21 c 0.3,0.46 4.24,4.23 8.56,2.66 4.32,-1.57 4.91,-7.11 5,-8 a 10.14,10.14 0 0 0 0,-2 q -8.5,-24.51 -17,-49 a 47.14,47.14 0 0 1 13.16,-3 56.25,56.25 0 0 1 17.84,2 29.82,29.82 0 0 1 5,2 c 5.79,2.86 8.66,6.3 9,6 0.34,-0.3 -2.77,-6.54 -9,-12 -12.56,-11 -29,-11.77 -34,-12 -2.49,-0.12 -4.56,-0.07 -6,0 a 8.31,8.31 0 0 0 -3,-4 7.74,7.74 0 0 0 -2,-1 c -0.19,0 -0.55,0 -1,0 -5.17,0.21 -8.82,3.77 -8.84,5 v 2 a 27.55,27.55 0 0 0 1,5 c -1,1 -2.29,2.36 -4,4 A 1.22,1.22 0 0 0 3.21,19.52 C 2.26,21 7.57,26.07 12.46,30.3 Z" style="fill:none;stroke:#eeeeee;stroke-width:6px;stroke-miterlimit:10"></path>
+                </g>
             </svg>`
-          )});
+            )});
+          }
+          else {
+            tomni.notificationManager.addChip({
+              title: 'Log entry created<div id="' + randomID + '"></div>',
+              icon: 'data:image/svg+xml;base64,' + btoa(
+              `<svg xmlns="http://www.w3.org/2000/svg" width="786" height="663.28003">
+                <path d="M 580.071,243.209 C 554.143,217.28 519.668,203 483,203 449.572,203 417.969,214.867 393,236.608 368.031,214.867 336.428,203 303,203 c -36.668,0 -71.143,14.28 -97.071,40.208 -1.875,1.876 -2.929,4.419 -2.929,7.071 v 200 c 0,4.044 2.437,7.691 6.173,9.239 3.737,1.549 8.038,0.692 10.898,-2.167 C 242.223,435.199 271.674,423 303,423 c 31.326,0 60.777,12.199 82.929,34.351 0.032,0.032 0.068,0.059 0.1,0.091 0.203,0.198 0.411,0.39 0.63,0.57 0.125,0.103 0.257,0.193 0.386,0.289 0.133,0.099 0.262,0.202 0.4,0.294 0.149,0.099 0.303,0.186 0.455,0.277 0.128,0.076 0.252,0.156 0.384,0.227 0.154,0.083 0.313,0.153 0.47,0.226 0.139,0.065 0.275,0.134 0.417,0.193 0.153,0.063 0.31,0.115 0.466,0.17 0.152,0.054 0.302,0.113 0.458,0.16 0.158,0.048 0.318,0.083 0.477,0.123 0.157,0.039 0.312,0.083 0.472,0.115 0.186,0.037 0.374,0.059 0.561,0.086 0.136,0.019 0.269,0.045 0.406,0.059 0.658,0.065 1.32,0.065 1.978,0 0.137,-0.013 0.271,-0.04 0.406,-0.059 0.188,-0.026 0.375,-0.049 0.561,-0.086 0.16,-0.032 0.315,-0.076 0.472,-0.115 0.159,-0.04 0.319,-0.075 0.477,-0.123 0.156,-0.047 0.306,-0.106 0.458,-0.16 0.156,-0.056 0.312,-0.107 0.466,-0.17 0.142,-0.059 0.278,-0.128 0.417,-0.193 0.157,-0.074 0.316,-0.144 0.47,-0.226 0.131,-0.07 0.256,-0.151 0.384,-0.227 0.153,-0.091 0.307,-0.177 0.455,-0.277 0.138,-0.092 0.267,-0.195 0.4,-0.294 0.129,-0.096 0.261,-0.186 0.386,-0.289 0.219,-0.18 0.427,-0.372 0.63,-0.57 0.033,-0.032 0.068,-0.058 0.1,-0.091 C 422.222,435.2 451.674,423 483,423 c 31.326,0 60.777,12.199 82.929,34.351 1.913,1.913 4.471,2.929 7.073,2.929 1.288,0 2.588,-0.25 3.825,-0.762 3.736,-1.548 6.173,-5.194 6.173,-9.239 v -200 c 0,-2.652 -1.054,-5.195 -2.929,-7.07 z M 223,428.68 V 254.519 C 244.786,234.162 273.035,223 303,223 c 29.967,0 58.213,11.171 80,31.531 V 428.685 C 359.834,412.003 332.11,403 303,403 c -29.108,0 -56.834,8.999 -80,25.68 z m 340,0 C 539.834,411.999 512.108,403 483,403 c -29.11,0 -56.834,9.002 -80,25.685 V 254.531 C 424.787,234.171 453.033,223 483,223 c 29.965,0 58.214,11.162 80,31.519 z" style="fill:#eeeeee;stroke:#eeeeee;stroke-width:6px;stroke-miterlimit:10"/>
+              </svg>`
+            )});
+          }
+
+          let chip = K.gid(randomID).parentElement.parentElement.parentElement;
+          if (logAndReap && tomni.gameMode) {
+            let icon = chip.getElementsByClassName('notificationIcon')[0];
+            icon.style.backgroundColor = '#4f74c4';
+          }
+
+          setTimeout(fadeOut.bind(null, chip), 3000);
         }
 
         callback(response);
