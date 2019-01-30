@@ -76,12 +76,13 @@
 
 #ewSLbuttonsWrapper {
   display: inline-block;
-  width: 80px;
+  max-width: 80px;
   line-height: 1;
   margin-left: 0.5px; /* to fix a small gap between the second and the third column */
   border-right-style: none;
   border-right-color: #b5b730;
   border-right-width: 2px;
+  padding-top: 1px;
 }
 
 #ewSLbuttonsWrapper div {
