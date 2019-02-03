@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.11.3
+// @version      1.12
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -610,19 +610,41 @@ if (LOCAL) {
       }
     });
   }
+
+  function complete(id) {
+    let cube = tomni.getCurrentCell().getTarget();
+
+    if (!cube && !id) {
+      return;
+    }
+
+    let cubeId = id || cube[0].id;
+
+    if (tomni.gameMode) {
+      tomni.leave();
+    }
+
+    $.post('/1.0/task/' + cubeId, {
+      action: 'complete',
+    }, 'json')
+    .done(function () {
+      // voted
+    });
+  }
   
   let cubeStatus;
 
   function createAdditionalSLButtons() {
     let html = `
+    <div id="ewSLduplicate" title="Duplicate">D</div>
+    <div id="ewSLmerger" title="merger">M</div>
       <div id="ewSLnub" title = "Nub">N</div>
       <div id="ewSLbranch" title="Branch">B</div>
       <div id="ewSLdust" title="Dust">d</div>
-      <div id="ewSLtestExtension" title="Test Extension">W</div>
-      <div id="ewSLduplicate" title="Duplicate">D</div>
-      <div id="ewSLmerger" title="merger">M</div>
+      <div id="ewSLcomplete" title="Complete">C</div>
       <div id="ewSLAImerger" title="Seed Merger">A</div>
       <div id="ewSLwrongSeedMerger" title="Wrong Seed">S</div>
+      <div id="ewSLtestExtension" title="Test Extension">W</div>
     `;
 
     let div = document.createElement('div');
@@ -630,6 +652,8 @@ if (LOCAL) {
     div.innerHTML = html;
 
     K.gid('scoutsLogFloatingControls').appendChild(div);
+
+    K.gid('ewSLcomplete').style.color = Cell.ScytheVisionColors.complete2;
 
     K.gid('ewSLbuttonsWrapper').style.display = settings.getValue('show-sl-shortcuts') ? 'inline-block' : 'none';
 
@@ -678,11 +702,18 @@ if (LOCAL) {
         case 'ewSLwrongSeedMerger':
           cubeStatus.status = 'good';
           cubeStatus.issue = 'wrong-seed';
+
+        case 'ewSLcomplete':;
       }
 
-      captureImage();
-      if (tomni.gameMode && settings.getValue('log-and-reap')) {
-        submitTask();
+      if (this.id === 'ewSLcomplete') {
+        complete();
+      }
+      else {
+        captureImage();
+        if (tomni.gameMode && settings.getValue('log-and-reap')) {
+          submitTask();
+        }
       }
     });
   }
@@ -1485,7 +1516,7 @@ function switchReapMode(logAndReap) {
       K.addCSSFile('http://127.0.0.1:8887/styles.css');
     }
     else {
-      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=6');
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=7');
     }
     
     K.injectJS(`
@@ -1534,6 +1565,11 @@ function switchReapMode(logAndReap) {
         name: 'Log and Reap',
         id: 'log-and-reap',
         defaultState: true
+      });
+      settings.addOption({
+        name: 'Auto Complete',
+        id: 'auto-complete',
+        defaultState: false
       });
     }
     
@@ -1666,6 +1702,12 @@ function switchReapMode(logAndReap) {
     }
 
   }
+
+  $(document).on('cube-submission-data', function (evt, data) {
+    if (settings.getValue('auto-complete')) {
+      complete(data.task_id);
+    }
+  });
 
 
   $('#settingsButton').click(function () {

@@ -76,7 +76,7 @@
 
 #ewSLbuttonsWrapper {
   display: inline-block;
-  max-width: 80px;
+  max-width: 97px;
   line-height: 1;
   margin-left: 0.5px; /* to fix a small gap between the second and the third column */
   border-right-style: none;
