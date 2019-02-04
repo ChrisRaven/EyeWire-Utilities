@@ -76,7 +76,7 @@
 
 #ewSLbuttonsWrapper {
   display: inline-block;
-  max-width: 97px;
+  max-width: 115px;
   line-height: 1;
   margin-left: 0.5px; /* to fix a small gap between the second and the third column */
   border-right-style: none;
@@ -85,7 +85,7 @@
   padding-top: 1px;
 }
 
-#ewSLbuttonsWrapper div {
+#ewSLbuttonsWrapper > div > div {
   display: inline-block;
   border: 1px solid;
   font-size: 10px;
@@ -98,8 +98,19 @@
   border-radius: 5px;
 }
 
-#ewSLbuttonsWrapper div:hover {
+#ewSLbuttonsWrapper > div {
+  max-width: 80px;
+  display: inline-block;
+  vertical-align: top;
+}
+
+#ewSLbuttonsWrapper > div > div:hover {
   background-color: hsla(0,0%,100%,.11);
+}
+
+#ewSLcomplete_wrapper {
+  display: inline-block;
+  padding: 9px;
 }
 
 #ewSLnub {
@@ -127,9 +138,9 @@
 }
 
 #ewSLAImerger {
-  color: #4f74c4;
+  color: #d04f4f;
 }
 
 #ewSLwrongSeedMerger {
-  color: #4f74c4;
+  color: #d04f4f;
 }

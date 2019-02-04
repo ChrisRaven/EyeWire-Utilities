@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.12
+// @version      1.12.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -266,7 +266,6 @@ if (LOCAL) {
       changeHtml('.sl-need-scythe', 'S');
       changeHtml('.sl-watch', 'W');
       changeHtml('.sl-history', 'H');
-      changeHtml('.sl-promotions', 'P');
       changeHtml('#sl-task-details', 'D');
       changeHtml('#sl-task-entry', 'N');
       K.qS('#scoutsLogFloatingControls img').style.display = 'none';
@@ -283,16 +282,28 @@ if (LOCAL) {
         'background-color': '#7a8288',
         'padding': '3px 7px'
       });
+      if (!K.gid('scoutsLogFloatingControls').classList.contains('sl-vertical')) {
       changeHtml('.sl-cell-list', 'Cell List');
       changeHtml('.sl-mystic', 'Mystic ');
-      changeHtml('.sl-open', 'Open Tasks ');
-      changeHtml('.sl-need-admin', 'Need Admin ');
-      changeHtml('.sl-need-scythe', 'Need Scythe ');
+      changeHtml('.sl-open', 'Open Logs ');
+      changeHtml('.sl-need-admin', 'Admin ');
+      changeHtml('.sl-need-scythe', 'Scythe ');
       changeHtml('.sl-watch', 'Watch ');
       changeHtml('.sl-history', 'History');
-      changeHtml('.sl-promotions', 'Promotions');
       changeHtml('#sl-task-details', 'Cube Details ');
       changeHtml('#sl-task-entry', '+');
+      }
+      else {
+        changeHtml('.sl-cell-list', 'C');
+        changeHtml('.sl-mystic', 'M ');
+        changeHtml('.sl-open', 'O ');
+        changeHtml('.sl-need-admin', 'A ');
+        changeHtml('.sl-need-scythe', 'S ');
+        changeHtml('.sl-watch', 'W ');
+        changeHtml('.sl-history', 'H');
+        changeHtml('#sl-task-details', 'D ');
+        changeHtml('#sl-task-entry', 'N');
+      }
       K.qS('#scoutsLogFloatingControls img').style.display = '';
       K.gid('sl-task-entry').style.width = '24px';
     }
@@ -636,15 +647,18 @@ if (LOCAL) {
 
   function createAdditionalSLButtons() {
     let html = `
-    <div id="ewSLduplicate" title="Duplicate">D</div>
-    <div id="ewSLmerger" title="merger">M</div>
+    <div>
+      <div id="ewSLduplicate" title="Duplicate">D</div>
+      <div id="ewSLmerger" title="Merger">M</div>
+      <div id="ewSLAImerger" title="Seed Merger">A</div>
+      <div id="ewSLwrongSeedMerger" title="Wrong Seed">S</div>
       <div id="ewSLnub" title = "Nub">N</div>
       <div id="ewSLbranch" title="Branch">B</div>
       <div id="ewSLdust" title="Dust">d</div>
-      <div id="ewSLcomplete" title="Complete">C</div>
-      <div id="ewSLAImerger" title="Seed Merger">A</div>
-      <div id="ewSLwrongSeedMerger" title="Wrong Seed">S</div>
       <div id="ewSLtestExtension" title="Test Extension">W</div>
+    </div><div id="ewSLcomplete_wrapper">
+      <div id="ewSLcomplete" title="Complete">C</div>
+    </div>
     `;
 
     let div = document.createElement('div');
@@ -1516,7 +1530,7 @@ function switchReapMode(logAndReap) {
       K.addCSSFile('http://127.0.0.1:8887/styles.css');
     }
     else {
-      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=7');
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=8');
     }
     
     K.injectJS(`
