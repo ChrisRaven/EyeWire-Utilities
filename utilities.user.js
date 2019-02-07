@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.12.1
+// @version      1.12.2
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -671,7 +671,7 @@ if (LOCAL) {
 
     K.gid('ewSLbuttonsWrapper').style.display = settings.getValue('show-sl-shortcuts') ? 'inline-block' : 'none';
 
-    $('#ewSLbuttonsWrapper').on('click', 'div', function () {
+    $('#ewSLbuttonsWrapper').on('click', 'div > div', function () {
       let target = tomni.getTarget();
 
       if (!target) {
@@ -716,8 +716,7 @@ if (LOCAL) {
         case 'ewSLwrongSeedMerger':
           cubeStatus.status = 'good';
           cubeStatus.issue = 'wrong-seed';
-
-        case 'ewSLcomplete':;
+          break;
       }
 
       if (this.id === 'ewSLcomplete') {
