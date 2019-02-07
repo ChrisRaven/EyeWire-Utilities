@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.12.2
+// @version      1.12.3
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -631,7 +631,7 @@ if (LOCAL) {
 
     let cubeId = id || cube[0].id;
 
-    if (tomni.gameMode) {
+    if (tomni.gameMode && settings.getValue('jump-to-ov-after-completing')) {
       tomni.leave();
     }
 
@@ -1583,6 +1583,11 @@ function switchReapMode(logAndReap) {
         name: 'Auto Complete',
         id: 'auto-complete',
         defaultState: false
+      });
+      settings.addOption({
+        name: 'Jump to OV after completing',
+        id: 'jump-to-ov-after-completing',
+        defaultState: true
       });
     }
     
