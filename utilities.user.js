@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.12.3
+// @version      1.12.4
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -1722,7 +1722,7 @@ function switchReapMode(logAndReap) {
   }
 
   $(document).on('cube-submission-data', function (evt, data) {
-    if (settings.getValue('auto-complete')) {
+    if (settings.getValue('auto-complete') && data.special === 'scythed') {
       complete(data.task_id);
     }
   });
