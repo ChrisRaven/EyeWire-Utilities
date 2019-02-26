@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.12.4
+// @version      1.12.5
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -255,6 +255,7 @@ if (LOCAL) {
         'vertical-align': 'top',
         'width': '15px'
       });
+      K.gid('sl-capture-image').style.width = '34px';
       $('#scoutsLogFloatingControls a span').css({
         'background-color': '#000',
         'padding': 0
@@ -1548,7 +1549,7 @@ function switchReapMode(logAndReap) {
       
     settings =  new Settings();
     settings.addCategory();
-    
+
     if (account.can('scout scythe mystics admin')) {
       settings.addOption({
         name: 'Compact horizontal Scout\'s Log',
@@ -1569,6 +1570,7 @@ function switchReapMode(logAndReap) {
         name: 'Show Remove Dupes button',
         id: 'show-remove-duplicate-segs-button'
       });
+
       settings.addOption({
         name: 'Scouts\' Log shortcuts',
         id: 'show-sl-shortcuts',
@@ -1577,8 +1579,10 @@ function switchReapMode(logAndReap) {
       settings.addOption({
         name: 'Log and Reap',
         id: 'log-and-reap',
+        indented: true,
         defaultState: true
       });
+
       settings.addOption({
         name: 'Auto Complete',
         id: 'auto-complete',
@@ -1735,6 +1739,14 @@ function switchReapMode(logAndReap) {
 
     if (!accordionApplied) {
       accordionApplied = true;
+      
+      let parent = K.qS('.sl-setting-group');
+      if (parent) {
+        parent.insertBefore(K.gid('compact-scouts-log-wrapper'), null);
+        parent.insertBefore(K.gid('show-sl-shortcuts-wrapper'), null);
+        parent.insertBefore(K.gid('log-and-reap-wrapper'), null);
+      }
+
 
       $('.settings-group, .sl-setting-group').each(function () {
         $(this).children().first().unwrap();
@@ -1759,7 +1771,7 @@ function switchReapMode(logAndReap) {
       trackerWindowSliderTitle.style.marginLeft = '30px';
       trackerWindowSliderTitle.innerHTML = 'Visible cubes';
 
-      let parent = trackerWindowSliderTitle.parentNode;
+      parent = trackerWindowSliderTitle.parentNode;
       parent.style.display = 'block';
 
       let newTitle = document.createElement('div');
@@ -1834,7 +1846,6 @@ function switchReapMode(logAndReap) {
       experimentalFeaturesTitle.style.marginLeft = '30px';
       experimentalFeaturesTitle.innerHTML = 'Enable 3D select (f key)';
 
-
       let playerActivityIcons = K.gid('playerActivityIcons').parentElement.parentElement;
       playerActivityIcons.style.display = 'block';
 
@@ -1855,6 +1866,7 @@ function switchReapMode(logAndReap) {
       let outlineGlowSliderTitle = K.gid('outlineGlowSlider').parentElement.getElementsByTagName('span')[0];
       outlineGlowSliderTitle.style.display = 'inline-block';
       outlineGlowSliderTitle.style.marginLeft = '30px';
+
     }
   });
 
