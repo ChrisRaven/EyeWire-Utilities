@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.12.5
+// @version      1.13
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -763,6 +763,10 @@ if (LOCAL) {
       K.ls.set('show-dataset-borders-state', !state);
       toggleDatasetBordersVisibility();
     });
+
+    if (account.can('scout scythe mystic admin')) {
+      compactInspectorPanel(K.ls.get('compact-inspector-panel') === 'true');
+    }
   }, 50);
 
   let intv4 = setInterval(function () {
@@ -1438,6 +1442,73 @@ function switchReapMode(logAndReap) {
   }
 }
 
+function compactInspectorPanel(compacted) {
+  if (compacted) {
+    $('#cubeInspectorFloatingControls .controls .control').css('width', 'auto');
+    $('#cubeInspectorFloatingControls .controls .control>button, #cubeInspectorFloatingControls .controls .control>div').css({
+      width: 24,
+      'margin-bottom': 'auto'
+    });
+    $('#cubeInspectorFloatingControls .controls .control .children, #cubeInspectorFloatingControls .controls .control .parents').css({
+      height: 24
+    });
+    $('.control').css('width', 25);
+    $('.down-arrow, .up-arrow').css('background-size', '20px 20px');
+    $('#x-counter').css({
+      bottom: 7,
+      'margin-left': -0.5
+    });
+    $('#cubeInspectorFloatingControls').css({
+      padding: 0,
+      height: 85
+    });
+    $('#cubeInspectorFloatingControls .info').css('width', 106);
+    $('#cubeInspectorFloatingControls .info .minimalButton').css('width', 40);
+    $('#cubeInspectorFloatingControls .controls .showmeme .parents, #cubeInspectorFloatingControls .controls .inspect .parents').css({
+      'margin-top': 2
+    });
+    $('.flat, .flat:active, .flat:hover').each(function () {
+      this.style.setProperty('border-radius', '8px', 'important');
+    });
+    $('#ews-current-color-indicator').css({
+      top: 40,
+      left: 16
+    });
+  }
+  else {
+    $('#cubeInspectorFloatingControls .controls .control').css('width', 40);
+    $('#cubeInspectorFloatingControls .controls .control>button, #cubeInspectorFloatingControls .controls .control>div').css({
+      width: 32,
+      'margin-bottom': 7
+    });
+    $('#cubeInspectorFloatingControls .controls .control .children, #cubeInspectorFloatingControls .controls .control .parents').css({
+      height: 32
+    });
+    $('.control').css('width', 40);
+    $('.down-arrow, .up-arrow').css('background-size', '27px 27px');
+    $('#x-counter').css({
+      bottom: 6,
+      'margin-left': -3.5
+    });
+    $('#cubeInspectorFloatingControls').css({
+      padding: 7,
+      height: 109
+    });
+    $('#cubeInspectorFloatingControls .info').css('width', 150);
+    $('#cubeInspectorFloatingControls .info .minimalButton').css('width', 55);
+    $('#cubeInspectorFloatingControls .controls .showmeme .parents, #cubeInspectorFloatingControls .controls .inspect .parents').css({
+      'margin-top': 'auto'
+    });
+    $('.flat, .flat:active, .flat:hover').each(function () {
+      this.style.setProperty('border-radius', '999px', 'important');
+    });
+    $('#ews-current-color-indicator').css({
+      top: 56,
+      left: 22
+    });
+  }
+}
+
 
   $(document).on('ews-setting-changed', function (evt, data) {
     switch (data.setting) {
@@ -1494,6 +1565,10 @@ function switchReapMode(logAndReap) {
         break;
       case 'log-and-reap': {
         switchReapMode(data.state);
+      }
+      case 'compact-inspector-panel': {
+        compactInspectorPanel(data.state);
+        break;
       }
     }
   });
@@ -1624,6 +1699,11 @@ function switchReapMode(logAndReap) {
       settings.addOption({
         name: 'Show children\'s IDs',
         id: 'show-childrens-ids'
+      });
+      settings.addOption({
+        name: 'Compact Inspector Panel',
+        id: 'compact-inspector-panel',
+        defaultState: false
       });
     }
 
