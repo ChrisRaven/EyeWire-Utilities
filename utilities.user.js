@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.13
+// @version      1.13.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -1452,7 +1452,7 @@ function compactInspectorPanel(compacted) {
     $('#cubeInspectorFloatingControls .controls .control .children, #cubeInspectorFloatingControls .controls .control .parents').css({
       height: 24
     });
-    $('.control').css('width', 25);
+    $('#cubeInspectorFloatingControls .control').css('width', 25);
     $('.down-arrow, .up-arrow').css('background-size', '20px 20px');
     $('#x-counter').css({
       bottom: 7,
@@ -1484,7 +1484,7 @@ function compactInspectorPanel(compacted) {
     $('#cubeInspectorFloatingControls .controls .control .children, #cubeInspectorFloatingControls .controls .control .parents').css({
       height: 32
     });
-    $('.control').css('width', 40);
+    $('#cubeInspectorFloatingControls .control').css('width', 40);
     $('.down-arrow, .up-arrow').css('background-size', '27px 27px');
     $('#x-counter').css({
       bottom: 6,
