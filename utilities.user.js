@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.13.1
+// @version      1.13.1.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -704,7 +704,7 @@ if (LOCAL) {
           break;
         case 'ewSLmerger':
           cubeStatus.status = 'good';
-          cubeStatus.issue = '';
+          cubeStatus.issue = 'merger';
           break;
         case 'ewSLAImerger':
           cubeStatus.status = 'good';
