@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.13.2
+// @version      1.13.2.1
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -1275,8 +1275,6 @@ if (LOCAL) {
               </svg>`
             )});
           }
-
-          setTimeout(fadeOut.bind(null, chip), 3000);
         }
 
         callback(response);
