@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.13.2.1
+// @version      1.14.0.0
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -315,6 +315,7 @@ if (LOCAL) {
   // Remove Duplicate Segments and Regrow Seed buttons
   $('#editActions').append('<button class="reapAuxButton" id="ews-remove-duplicates-button" title="Remove Duplicate Segments">&nbsp;</button>');
   $('#editActions').append('<button class="reapAuxButton" id="ews-restore-seed-button" title="Regrow Seed">&nbsp;</button>');
+  $('#editActions').append('<button class="reapAuxButton" id="ews-remove-undercolor-button" title="Remove Undercolored Segments">&nbsp;</button>');
 
   $('#ews-restore-seed-button')
     .css({
@@ -348,6 +349,23 @@ if (LOCAL) {
 
       if (dupeSegs) {
         tomni.f('deselect', {segids: dupeSegs});
+      }
+    });
+
+    $('#ews-remove-undercolor-button')
+    .css({
+      'color': 'white',
+      'left': '50%',
+      'position': 'absolute',
+      'margin-top': 'auto',
+      'margin-left': '175px'
+    })
+    .click(function () {
+      if (tomni.task.reviewReq.responseJSON) {
+        let undercolor = tomni.task.reviewReq.responseJSON.undercolor;
+        if (undercolor && undercolor[0]) {
+          tomni.f('deselect', {segids: undercolor});
+        }
       }
     });
 
@@ -1521,6 +1539,9 @@ function compactInspectorPanel(compacted) {
       case 'show-remove-duplicate-segs-button':
         setReapAuxButtonVisibility('ews-remove-duplicates-button', data.state);
         break;
+      case 'show-remove-undercolor-segs-button':
+        setReapAuxButtonVisibility('ews-remove-undercolor-button', data.state);
+        break;
       case 'show-dataset-borders-button':
         setDatasetBorderButtonAndOptionsVisibility(data.state);
         break;
@@ -1597,7 +1618,7 @@ function compactInspectorPanel(compacted) {
       K.addCSSFile('http://127.0.0.1:8887/styles.css');
     }
     else {
-      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=8');
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Utilities/styles.css?v=9');
     }
     
     K.injectJS(`
@@ -1636,6 +1657,11 @@ function compactInspectorPanel(compacted) {
       settings.addOption({
         name: 'Show Remove Dupes button',
         id: 'show-remove-duplicate-segs-button'
+      });
+      settings.addOption({
+        name: 'Show Remove Undercolor button',
+        id: 'show-remove-undercolor-segs-button',
+        defaultState: true
       });
 
       settings.addOption({
