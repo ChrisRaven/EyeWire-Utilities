@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.14.0.0
+// @version      1.15.0.0
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -315,7 +315,7 @@ if (LOCAL) {
   // Remove Duplicate Segments and Regrow Seed buttons
   $('#editActions').append('<button class="reapAuxButton" id="ews-remove-duplicates-button" title="Remove Duplicate Segments">&nbsp;</button>');
   $('#editActions').append('<button class="reapAuxButton" id="ews-restore-seed-button" title="Regrow Seed">&nbsp;</button>');
-  $('#editActions').append('<button class="reapAuxButton" id="ews-remove-undercolor-button" title="Remove Undercolored Segments">&nbsp;</button>');
+  $('#editActions').append('<button class="reapAuxButton" id="ews-remove-undercolor-button" title="Remove Undercolored (left click) or Low Confidence (right click) Segments">&nbsp;</button>');
 
   $('#ews-restore-seed-button')
     .css({
@@ -366,6 +366,22 @@ if (LOCAL) {
         if (undercolor && undercolor[0]) {
           tomni.f('deselect', {segids: undercolor});
         }
+      }
+    })
+    .contextmenu(function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (tomni.task.segments) {
+        let lowConfidenceSegs = [];
+
+        for (const [key, value] of Object.entries(tomni.task.segments)) {
+          if (value < 0.5) {
+            lowConfidenceSegs.push(key);
+          }
+        }
+
+        tomni.f('deselect', {segids: lowConfidenceSegs});
       }
     });
 
@@ -1659,7 +1675,7 @@ function compactInspectorPanel(compacted) {
         id: 'show-remove-duplicate-segs-button'
       });
       settings.addOption({
-        name: 'Show Remove Undercolor button',
+        name: 'Show "Remove Undercolor/Low Confidence" button',
         id: 'show-remove-undercolor-segs-button',
         defaultState: true
       });
