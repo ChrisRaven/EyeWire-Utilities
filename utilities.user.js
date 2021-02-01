@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.15.0.0
+// @version      1.15.1.0
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -376,7 +376,7 @@ if (LOCAL) {
         let lowConfidenceSegs = [];
 
         for (const [key, value] of Object.entries(tomni.task.segments)) {
-          if (value < 0.5) {
+          if (value <= 0.5) {
             lowConfidenceSegs.push(key);
           }
         }
