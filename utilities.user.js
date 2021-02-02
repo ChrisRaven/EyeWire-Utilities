@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.15.1.0
+// @version      1.16.0.0
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -1837,6 +1837,24 @@ function compactInspectorPanel(compacted) {
       });
     }
 
+    if (account.can('scythe mystic')) { // admins already have te button
+      $('.control.inspect').first().after('<div class="control remesh" id="utilities-scythe-remesh" style="width: 25px;"><div class="children translucent flat" style="width: 24px; margin-bottom: auto; height: 24px; border-radius: 8px !important;"></div><button class="cube translucent flat minimalButton active" title="Mesh ( + )" style="width: 24px; margin-bottom: auto; border-radius: 8px !important;">M</button><div class="parents translucent flat" style="width: 24px; margin-bottom: auto; height: 24px; border-radius: 8px !important;"></div></div>');
+
+      $('#utilities-scythe-remesh').click(function () {
+        let target = tomni.getTarget();
+        if (!target) {
+          return;
+        }
+
+        let currentCubeId = target[0].id;
+        if (!currentCubeId) {
+          return;
+        }
+
+        $.post('/1.0/task/' + currentCubeId + '/remesh');
+      });
+    }
+
   }
 
   $(document).on('cube-submission-data', function (evt, data) {
@@ -1980,7 +1998,6 @@ function compactInspectorPanel(compacted) {
       let outlineGlowSliderTitle = K.gid('outlineGlowSlider').parentElement.getElementsByTagName('span')[0];
       outlineGlowSliderTitle.style.display = 'inline-block';
       outlineGlowSliderTitle.style.marginLeft = '30px';
-
     }
   });
 
