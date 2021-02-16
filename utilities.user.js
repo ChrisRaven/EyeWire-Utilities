@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.16.0.0
+// @version      1.17.0.0
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -1666,14 +1666,17 @@ function compactInspectorPanel(compacted) {
         name: 'Auto Refresh ShowMeMe',
         id: 'auto-refresh-showmeme'
       });
+
       settings.addOption({
         name: 'Show Regrow Seed button',
         id: 'show-restore-seed-button'
       });
+
       settings.addOption({
         name: 'Show Remove Dupes button',
         id: 'show-remove-duplicate-segs-button'
       });
+
       settings.addOption({
         name: 'Show "Remove Undercolor/Low Confidence" button',
         id: 'show-remove-undercolor-segs-button',
@@ -1685,6 +1688,7 @@ function compactInspectorPanel(compacted) {
         id: 'show-sl-shortcuts',
         defaultState: true
       });
+
       settings.addOption({
         name: 'Log and Reap',
         id: 'log-and-reap',
@@ -1697,6 +1701,7 @@ function compactInspectorPanel(compacted) {
         id: 'auto-complete',
         defaultState: false
       });
+
       settings.addOption({
         name: 'Jump to OV after completing',
         id: 'jump-to-ov-after-completing',
@@ -1721,22 +1726,38 @@ function compactInspectorPanel(compacted) {
         defaultState: true,
         indented: true
       });
+
     settings.addOption({
       name: 'Submit using Spacebar',
       id: 'submit-using-spacebar'
     });
+
     settings.addOption({
       name: 'Don\'t rotate OV while in cube',
       id: 'dont-rotate-ov-while-in-cube'
     });
+
     if (account.can('scout scythe mystic admin')) {
       settings.addOption({
         name: 'Show children\'s IDs',
         id: 'show-childrens-ids'
       });
+
       settings.addOption({
         name: 'Compact Inspector Panel',
         id: 'compact-inspector-panel',
+        defaultState: false
+      });
+
+      settings.addOption({
+        name: 'Piercing remove in 3D',
+        id: 'piercing-remove',
+        defaultState: false
+      });
+
+      settings.addOption({
+        name: 'Ranged remove in 3D',
+        id: 'ranged-remove',
         defaultState: false
       });
     }
@@ -1748,22 +1769,27 @@ function compactInspectorPanel(compacted) {
       name: 'Blog',
       id: 'hide-blog'
     });
+
     settings.addOption({
       name: 'Wiki',
       id: 'hide-wiki'
     });
+
     settings.addOption({
       name: 'Forum',
       id: 'hide-forum'
     });
+
     settings.addOption({
       name: 'About',
       id: 'hide-about'
     });
+
     settings.addOption({
       name: 'FAQ',
       id: 'hide-faq'
     });
+
     if (K.gid('ewsLinkWrapper')) {
       settings.addOption({
         name: 'Stats',
@@ -2059,6 +2085,63 @@ function compactInspectorPanel(compacted) {
 
   $(document).on('cube-enter-triggered.utilities', save);
   $(document).on('cube-leave-triggered.utilities', restore);
+
+
+  let isZKeyPressed = false;
+
+  $(document)
+    .keydown(function (e) {
+      if (!tomni.task || !tomni.task.inspect) {
+        return;
+      }
+
+      if (e.key == 'Z' || e.key == 'z') {
+        isZKeyPressed = true;
+        if (settings.getValue('ranged-remove')) {
+          K.gid('threeDCanvas').style.setProperty('cursor', getComputedStyle(document.getElementById('twoD')).cursor  , 'important');
+        }
+      }
+    })
+    .keyup(function (e) {
+      if (!tomni.task || !tomni.task.inspect) {
+        return;
+      }
+
+      if (e.key == 'Z' || e.key == 'z') {
+        isZKeyPressed = false;
+        if (settings.getValue('ranged-remove')) {
+          K.gid('threeDCanvas').style.setProperty('cursor', 'pointer', 'important');
+        }
+      }
+    });
+
+  // from omni.js - TwoD.paint()
+  let diameters = {
+    1: 1,
+    2: 25,
+    3: 50,
+    4: 100
+  };
+
+  $('#threeDCanvas').contextmenu(function (e) {
+    if (!tomni.task || !tomni.task.inspect) {
+      return;
+    }
+
+    let brushSize = 1;
+
+    if (settings.getValue('ranged-remove')) {
+      brushSize = Math.ceil(diameters[tomni.prefs.get('brush_size')] / 2);
+    }
+
+    if (isZKeyPressed && settings.getValue('piercing-remove')) {
+      let offset = Utils.UI.eventOffset($('#threeDCanvas'), e);
+      let seg;
+      while (seg = tomni.threeD.getId(offset, brushSize, 'segid')) {
+        tomni.threeD.removeSegment(seg);
+      }
+    }
+  });
 
 
   let intv = setInterval(function () {
