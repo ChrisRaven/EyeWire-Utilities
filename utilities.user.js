@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.17.0.0
+// @version      1.17.1.0
 // @description  Utilities for EyeWire
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 /*jshint esversion: 6 */
-/*globals $, account, tomni, THREE, scoutsLog */ 
+/*globals $, account, tomni, THREE, scoutsLog, Cell, Utils */ 
 
 let LOCAL = false;
 if (LOCAL) {
@@ -1246,17 +1246,6 @@ if (LOCAL) {
   }
 
   // source: omni.js
-  function fadeOut(el) {
-    var onTransitionComplete = function onTransitionComplete() {
-      el.removeEventListener('transitionend', onTransitionComplete);
-      el.parentNode.removeChild(el);
-    };
-
-    el.addEventListener('transitionend', onTransitionComplete);
-
-    el.style.opacity = 0;
-  }
-
   function fileRequest(url, data, file, callback) {
     let form = new FormData();
     if (data) {
@@ -1286,7 +1275,6 @@ if (LOCAL) {
           tomni.notificationManager.addChip({title: 'Error during creating the log entry'});
         }
         else {
-          let randomID = K.randomString();
           let logAndReap = settings.getValue('log-and-reap');
 
           if (logAndReap && tomni.gameMode) {
@@ -1592,13 +1580,12 @@ function compactInspectorPanel(compacted) {
           K.gid('ewSLbuttonsWrapper').style.display = data.state ? 'inline-block' : 'none';
         }
         break;
-      case 'log-and-reap': {
+      case 'log-and-reap':
         switchReapMode(data.state);
-      }
-      case 'compact-inspector-panel': {
+        break;
+      case 'compact-inspector-panel':
         compactInspectorPanel(data.state);
         break;
-      }
     }
   });
 
@@ -2137,9 +2124,12 @@ function compactInspectorPanel(compacted) {
     if (isZKeyPressed && settings.getValue('piercing-remove')) {
       let offset = Utils.UI.eventOffset($('#threeDCanvas'), e);
       let seg;
-      while (seg = tomni.threeD.getId(offset, brushSize, 'segid')) {
+      let segs = [];
+      while (seg = tomni.threeD.getId(offset, brushSize, 'segid')) { // jshint ignore:line
         tomni.threeD.removeSegment(seg);
+        segs.push(seg);
       }
+      tomni.f('deselect', {segids: segs});
     }
   });
 
